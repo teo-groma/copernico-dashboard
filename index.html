@@ -9,16 +9,16 @@
 <style>
 :root{--or:#F7931E;--gr:#41B74F;--gl:#A3D9A5;--bk:#111;--s1:#1A1A1A;--s2:#222;--s3:#2A2A2A;--bd:#333;--tx:#F0F0F0;--mu:#888;--mu2:#555;--re:#E53935;--am:#F59E0B}
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bk);color:var(--tx);font-family:"Montserrat",sans-serif;font-size:13px}
+body{background:var(--bk);color:var(--tx);font-family:"Montserrat",sans-serif;font-size:13px;line-height:1.5}
 h1,h2,h3,.logo-text,.tab,.an,.akl,.ag-per-label,.meta-label,.ch,.log-wl,.log-sl,.rml,.bp-t,.bp-n,.kl,.wlbl,.smt{font-family:"Raleway",sans-serif}
 .hdr{background:var(--s1);border-bottom:1px solid var(--bd);padding:0 20px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
 .hdr-l{display:flex;align-items:center;gap:12px}
 .logo-text{font-size:17px;font-weight:900;letter-spacing:.12em;color:#fff}
 .logo-sub{font-size:9px;letter-spacing:.15em;color:var(--or);font-weight:700;margin-top:1px;text-transform:uppercase;font-family:"Raleway",sans-serif}
-.hdiv{width:1px;height:28px;background:var(--bd)}
+.hdiv{width:1px;height:28px;background:var(--bd);flex-shrink:0}
 .htit{font-size:11px;font-weight:700;color:var(--mu);letter-spacing:.08em;text-transform:uppercase}
 .live{display:flex;align-items:center;gap:5px;background:rgba(65,183,79,.12);border:1px solid var(--gr);border-radius:20px;padding:3px 10px}
-.live-d{width:6px;height:6px;border-radius:50%;background:var(--gr);animation:bl 2s infinite}
+.live-d{width:6px;height:6px;border-radius:50%;background:var(--gr);animation:bl 2s infinite;flex-shrink:0}
 @keyframes bl{0%,100%{opacity:1}50%{opacity:.3}}
 .live-t{font-size:10px;font-weight:700;color:var(--gr);letter-spacing:.06em;font-family:"Raleway",sans-serif}
 .kpi-wrap{background:var(--s1);border-bottom:1px solid var(--bd);padding:12px 20px}
@@ -29,9 +29,9 @@ h1,h2,h3,.logo-text,.tab,.an,.akl,.ag-per-label,.meta-label,.ch,.log-wl,.log-sl,
 .kl{font-size:9px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
 .kv{font-size:26px;font-weight:900;line-height:1;margin-bottom:3px;font-family:"Raleway",sans-serif}
 .ks{font-size:11px;color:var(--mu)}.kp{font-size:11px;font-weight:700;margin-top:4px}
-.main{padding:16px}
-.tabs{display:flex;gap:2px;background:var(--s2);border-radius:7px;padding:3px;margin-bottom:14px;overflow-x:auto}
-.tab{padding:7px 14px;border-radius:5px;font-size:11px;font-weight:700;color:var(--mu);border:none;background:transparent;cursor:pointer;white-space:nowrap;letter-spacing:.05em;text-transform:uppercase;transition:.12s}
+.main{padding:16px;max-width:1200px;margin:0 auto}
+.tabs{display:flex;gap:2px;background:var(--s2);border-radius:7px;padding:3px;margin-bottom:14px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tab{padding:7px 12px;border-radius:5px;font-size:11px;font-weight:700;color:var(--mu);border:none;background:transparent;cursor:pointer;white-space:nowrap;letter-spacing:.05em;text-transform:uppercase;transition:.12s}
 .tab.on{background:var(--or);color:#000}
 .view{display:none}.view.on{display:block}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
@@ -57,10 +57,6 @@ h1,h2,h3,.logo-text,.tab,.an,.akl,.ag-per-label,.meta-label,.ch,.log-wl,.log-sl,
 .ft{flex:1;background:var(--s2);border-radius:3px;height:13px;overflow:hidden}
 .ff{height:100%;border-radius:3px}.fn{font-size:10px;color:var(--mu);width:80px;text-align:right;flex-shrink:0}
 .ch-wrap{position:relative;height:170px}
-.srow{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--bd)}
-.srow:last-child{border-bottom:none}
-.srk{font-size:11px;font-weight:900;color:var(--mu);width:18px;flex-shrink:0;font-family:"Raleway",sans-serif}
-.sn{font-size:12px;font-weight:600;flex:1;font-family:"Raleway",sans-serif}
 .ag-card{background:var(--s2);border:1px solid var(--bd);border-radius:9px;padding:12px;margin-bottom:8px}
 .ag-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
 .av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;flex-shrink:0;font-family:"Raleway",sans-serif}
@@ -77,11 +73,11 @@ h1,h2,h3,.logo-text,.tab,.an,.akl,.ag-per-label,.meta-label,.ch,.log-wl,.log-sl,
 .meta-label{font-size:9px;color:var(--mu);width:85px;flex-shrink:0}
 .meta-track{flex:1;background:var(--s3);border-radius:3px;height:5px;overflow:hidden}
 .meta-fill{height:100%;border-radius:3px}
-.meta-target{font-size:9px;color:var(--mu2);width:45px;text-align:right;flex-shrink:0}
+.meta-target{font-size:9px;color:var(--mu2);width:50px;text-align:right;flex-shrink:0}
 .quality-table{width:100%;border-collapse:collapse}
-.quality-table th{font-size:9px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;padding:7px 8px;border-bottom:1px solid var(--bd);text-align:right;white-space:nowrap;font-family:"Raleway",sans-serif}
+.quality-table th{font-size:9px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;padding:7px 6px;border-bottom:1px solid var(--bd);text-align:right;white-space:nowrap;font-family:"Raleway",sans-serif}
 .quality-table th:first-child{text-align:left}
-.quality-table td{padding:8px 8px;font-size:12px;border-bottom:1px solid var(--bd);text-align:right;color:var(--tx);vertical-align:middle}
+.quality-table td{padding:7px 6px;font-size:11px;border-bottom:1px solid var(--bd);text-align:right;color:var(--tx);vertical-align:middle}
 .quality-table td:first-child{text-align:left}
 .quality-table tr:last-child td{border-bottom:none}
 .quality-table tr:hover td{background:var(--s2)}
@@ -118,8 +114,39 @@ h1,h2,h3,.logo-text,.tab,.an,.akl,.ag-per-label,.meta-label,.ch,.log-wl,.log-sl,
 .recon td:first-child{text-align:left;font-weight:600}
 .recon tr:last-child td{border-bottom:none}
 .recon tr:hover td{background:var(--s2)}
-.ftr{text-align:center;color:var(--mu);font-size:11px;padding:20px;border-top:1px solid var(--bd);margin-top:24px;font-family:"Raleway",sans-serif}
-@media(max-width:800px){.kpis,.g2,.g3,.wk,.rm,.ag-periods,.ag-stats,.vel-g{grid-template-columns:1fr}}
+.ftr{text-align:center;padding:20px;border-top:1px solid var(--bd);margin-top:24px}
+.ftr-main{color:var(--mu);font-size:11px;font-family:"Raleway",sans-serif;margin-bottom:6px}
+.ftr-brand{display:flex;align-items:center;justify-content:center;gap:8px}
+.ftr-dev{font-size:10px;color:var(--mu2)}
+.ftr-link{color:var(--or);text-decoration:none;font-size:11px;font-weight:700;font-family:"Raleway",sans-serif;letter-spacing:.05em}
+.ftr-link:hover{color:var(--gr)}
+/* RESPONSIVE MOBILE */
+@media(max-width:768px){
+  .hdr{padding:0 12px;height:50px}
+  .logo-text{font-size:14px}
+  .htit{display:none}
+  .hdiv{display:none}
+  .kpi-wrap{padding:10px 12px}
+  .kpis{grid-template-columns:1fr 1fr;gap:6px}
+  .kv{font-size:20px}
+  .main{padding:10px}
+  .g2,.g3,.rm,.vel-g{grid-template-columns:1fr}
+  .wk{grid-template-columns:1fr}
+  .ag-periods{grid-template-columns:1fr}
+  .ag-per-divider{height:1px;width:100%;margin:8px 0}
+  .ag-stats{grid-template-columns:repeat(2,1fr)}
+  .quality-table{font-size:10px}
+  .quality-table th,.quality-table td{padding:5px 4px}
+  .bp-row{grid-template-columns:24px 1fr}
+  .rm{grid-template-columns:1fr 1fr}
+  .tabs{gap:1px}
+  .tab{padding:6px 8px;font-size:10px}
+}
+@media(max-width:480px){
+  .kpis{grid-template-columns:1fr 1fr}
+  .rm{grid-template-columns:1fr}
+  .quality-table th:nth-child(n+5),.quality-table td:nth-child(n+5){display:none}
+}
 </style>
 </head>
 <body>
@@ -131,17 +158,17 @@ h1,h2,h3,.logo-text,.tab,.an,.akl,.ag-per-label,.meta-label,.ch,.log-wl,.log-sl,
   </div>
   <div style="display:flex;align-items:center;gap:10px">
     <div class="live"><div class="live-d"></div><span class="live-t">LIVE</span></div>
-    <div style="font-size:10px;color:var(--mu)">Actualizado <b style="color:var(--or)">17 Mar 2026 - 01:01</b></div>
+    <div style="font-size:10px;color:var(--mu)">Act. <b style="color:var(--or)">17 Mar 2026 - 01:38</b></div>
   </div>
 </header>
 
 <div class="kpi-wrap">
-  <div class="kpi-label-global">Ultimos 3 meses</div>
+  <div class="kpi-label-global">Ultimos 3 meses · Enero + Febrero + Marzo</div>
   <div class="kpis">
-    <div class="kpi or"><div class="kl">Leads</div><div class="kv">2620</div><div class="ks">ultimos 3 meses</div><div class="kp" style="color:var(--or)">base 100%</div></div>
-    <div class="kpi gr"><div class="kl">Cotizaciones</div><div class="kv">536</div><div class="ks">Conv. Lead a Cot</div><div class="kp" style="color:var(--gr)">20.5% L-C</div></div>
-    <div class="kpi am"><div class="kl">Visitas tecnicas</div><div class="kv">102</div><div class="ks">Conv. Cot a Vis</div><div class="kp" style="color:var(--am)">19.0% C-V</div></div>
-    <div class="kpi gr"><div class="kl">Cierres</div><div class="kv" style="color:var(--gr)">8</div><div class="ks">Conv. Vis a Cie</div><div class="kp" style="color:var(--gr)">7.8% V-C</div></div>
+    <div class="kpi or"><div class="kl">Leads</div><div class="kv">1,239</div><div class="ks">ultimos 3 meses</div><div class="kp" style="color:var(--or)">base 100%</div></div>
+    <div class="kpi gr"><div class="kl">Cotizaciones</div><div class="kv">208</div><div class="ks">Conv. Lead a Cot</div><div class="kp" style="color:var(--gr)">16.8% L-C</div></div>
+    <div class="kpi am"><div class="kl">Visitas tecnicas</div><div class="kv">35</div><div class="ks">Conv. Cot a Vis</div><div class="kp" style="color:var(--am)">16.8% C-V</div></div>
+    <div class="kpi gr"><div class="kl">Cierres</div><div class="kv" style="color:var(--gr)">7</div><div class="ks">Conv. Vis a Cie</div><div class="kp" style="color:var(--gr)">20.0% V-C</div></div>
   </div>
 </div>
 
@@ -159,26 +186,26 @@ h1,h2,h3,.logo-text,.tab,.an,.akl,.ag-per-label,.meta-label,.ch,.log-wl,.log-sl,
 <div id="tab-overview" class="view on">
   <div class="g2">
     <div>
-      <div class="ch" style="margin-top:0">Semaforos - semana actual</div>
-      <div class="sm sr"><div class="smt">Llamadas - 4/60 bajo meta</div><div class="smb">Subir el ritmo de contacto esta semana.</div></div>
-      <div class="sm sr"><div class="smt">Cotizaciones - 5/15 bajo meta</div><div class="smb">Conv. llamada-cot esta semana: 125.0%. Meta: 25.0%.</div></div>
-      <div class="sm sr"><div class="smt">Visitas - 0/3 cuello activo</div><div class="smb">El flujo WA post-cotizacion es el mayor multiplicador disponible. Monitorear semana a semana.</div></div>
-      <div class="sm sr"><div class="smt">Cierres - 0/1 en progreso</div><div class="smb">Ciclo de venta ~90 dias. Los cierres de esta semana son leads de hace 3 meses.</div></div>
-      <div class="ch" style="margin-top:14px">Comparacion - ultimas 3 semanas</div>
+      <div class="ch" style="margin-top:0">Semaforos · semana actual</div>
+      <div class="sm sr"><div class="smt">Llamadas · 4/80 · bajo meta</div><div class="smb">Conv. llamada-cot esta semana: 125.0%. Meta: 25.0%.</div></div>
+      <div class="sm sr"><div class="smt">Cotizaciones · 5/24 · bajo meta</div><div class="smb">Meta semanal 24 cotizaciones. Historico 3 meses: 16.8% de leads.</div></div>
+      <div class="sm sr"><div class="smt">Visitas · 0/6 · cuello activo</div><div class="smb">Cot-Vis historico 16.8%. Flujo WA post-cotizacion activo — monitorear semana a semana.</div></div>
+      <div class="sm sr"><div class="smt">Cierres · 0/2 · en progreso</div><div class="smb">Ciclo 90 dias. Los cierres de esta semana son leads de hace 3 meses.</div></div>
+      <div class="ch" style="margin-top:14px">Comparacion · ultimas 3 semanas (EOD)</div>
       <div class="wk">
-        <div class="wcol"><div class="wlbl">Semana anterior anterior</div>
-          <div class="wrow"><span class="wm">Llamadas</span><span class="wv" style="color:var(--mu)">12</span></div>
+        <div class="wcol"><div class="wlbl">Sem anterior anterior</div>
+          <div class="wrow"><span class="wm">Llamadas</span><span class="wv" style="color:var(--mu)">98</span></div>
           <div class="wrow"><span class="wm">Cotiz.</span><span class="wv" style="color:var(--mu)">10</span></div>
-          <div class="wrow"><span class="wm">Visitas</span><span class="wv" style="color:var(--mu)">0</span></div>
-          <div class="wrow"><span class="wm">Cierres</span><span class="wv" style="color:var(--mu)">0</span></div>
+          <div class="wrow"><span class="wm">Visitas</span><span class="wv" style="color:var(--mu)">1</span></div>
+          <div class="wrow"><span class="wm">Cierres</span><span class="wv" style="color:var(--mu)">1</span></div>
         </div>
         <div class="wcol"><div class="wlbl">Semana anterior</div>
-          <div class="wrow"><span class="wm">Llamadas</span><span class="wv" style="color:var(--or)">12</span></div>
-          <div class="wrow"><span class="wm">Cotiz.</span><span class="wv" style="color:var(--or)">10</span></div>
-          <div class="wrow"><span class="wm">Visitas</span><span class="wv" style="color:var(--or)">0</span></div>
-          <div class="wrow"><span class="wm">Cierres</span><span class="wv" style="color:var(--or)">0</span></div>
+          <div class="wrow"><span class="wm">Llamadas</span><span class="wv" style="color:#E53935">12</span></div>
+          <div class="wrow"><span class="wm">Cotiz.</span><span class="wv" style="color:#E53935">10</span></div>
+          <div class="wrow"><span class="wm">Visitas</span><span class="wv" style="color:#E53935">0</span></div>
+          <div class="wrow"><span class="wm">Cierres</span><span class="wv" style="color:#E53935">0</span></div>
         </div>
-        <div class="wcol cur"><div class="wlbl curl">Esta semana - HOY</div>
+        <div class="wcol cur"><div class="wlbl curl">Esta semana · HOY</div>
           <div class="wrow"><span class="wm">Llamadas</span><span class="wv" style="color:#E53935">4</span></div>
           <div class="wrow"><span class="wm">Cotiz.</span><span class="wv" style="color:#E53935">5</span></div>
           <div class="wrow"><span class="wm">Visitas</span><span class="wv" style="color:#E53935">0</span></div>
@@ -188,13 +215,13 @@ h1,h2,h3,.logo-text,.tab,.an,.akl,.ag-per-label,.meta-label,.ch,.log-wl,.log-sl,
     </div>
     <div>
       <div class="ch" style="margin-top:0">Insights criticos</div>
-      <div class="ins ins-g"><div class="ins-t">Flujo WA post-cotizacion activo</div><div class="ins-b">Monitorear que Cot-Vis se mantenga por encima del 20% sostenido. Si cae revisar timing y contenido del mensaje.</div></div>
-      <div class="ins ins-a"><div class="ins-t">Cohorte Feb 2026 cierra en mayo</div><div class="ins-b">574 leads de feb, 19.9% conv = 114 cotizaciones activas. Con ciclo 90 dias esos leads cierran en mayo. Preparar disponibilidad de Alejandro.</div></div>
-      <div class="ins ins-r"><div class="ins-t">71% leads sin fuente - CPL real imposible</div><div class="ins-b">Sin UTMs no se sabe que ad genera los leads que cotizan y cierran. Cada semana sin esto es optimizacion ciega.</div><div class="ins-act">UTMs en todos los forms GHL - prioridad 1</div></div>
-      <div class="ins ins-a"><div class="ins-t">AD 4 y AD 3 - mejor ROI real del stack</div><div class="ins-b">No es el CPL de entrada lo que importa sino el CPL por cierre. AD 4 cierra 7x mas barato que AD 9. Ver tab Fuentes y Ads.</div><div class="ins-act">Redirigir 20% budget AD 9 hacia AD 4</div></div>
+      <div class="ins ins-g"><div class="ins-t">Flujo WA post-cotizacion activo</div><div class="ins-b">Monitorear que Cot-Vis se mantenga por encima del 25.0% sostenido.</div></div>
+      <div class="ins ins-a"><div class="ins-t">Cohorte Feb 2026 cierra en mayo</div><div class="ins-b">574 leads de feb, 19.9% conv = 114 cotizaciones activas. Con ciclo 90 dias cierran en mayo. Preparar disponibilidad de Alejandro.</div></div>
+      <div class="ins ins-r"><div class="ins-t">71% leads sin fuente · CPL real imposible</div><div class="ins-b">Sin UTMs no se sabe que ad genera los leads que cotizan y cierran.</div><div class="ins-act">UTMs en todos los forms GHL · prioridad 1</div></div>
+      <div class="ins ins-a"><div class="ins-t">AD 4 y AD 3 · mejor ROI real del stack</div><div class="ins-b">El CPL real por cierre es el numero que importa. Ver tab Fuentes y Ads.</div><div class="ins-act">Redirigir 20% budget AD 9 hacia AD 4</div></div>
       <div class="g3" style="margin-top:14px;margin-bottom:0">
         <div style="background:var(--s2);border-radius:7px;padding:10px;text-align:center"><div style="font-size:9px;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;font-family:'Raleway',sans-serif">Cierres esperados</div><div style="font-size:20px;font-weight:900;color:var(--gr);font-family:'Raleway',sans-serif">3-5</div><div style="font-size:10px;color:var(--mu)">cohorte dic 2025</div></div>
-        <div style="background:var(--s2);border-radius:7px;padding:10px;text-align:center"><div style="font-size:9px;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;font-family:'Raleway',sans-serif">Cot. en pipeline</div><div style="font-size:20px;font-weight:900;color:var(--or);font-family:'Raleway',sans-serif">536</div><div style="font-size:10px;color:var(--mu)">ult. 3 meses</div></div>
+        <div style="background:var(--s2);border-radius:7px;padding:10px;text-align:center"><div style="font-size:9px;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;font-family:'Raleway',sans-serif">Cot. en pipeline</div><div style="font-size:20px;font-weight:900;color:var(--or);font-family:'Raleway',sans-serif">208</div><div style="font-size:10px;color:var(--mu)">ult. 3 meses</div></div>
         <div style="background:var(--s2);border-radius:7px;padding:10px;text-align:center"><div style="font-size:9px;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;font-family:'Raleway',sans-serif">Ciclo confirmado</div><div style="font-size:20px;font-weight:900;color:var(--gl);font-family:'Raleway',sans-serif">~90d</div><div style="font-size:10px;color:var(--mu)">dic cierra mar</div></div>
       </div>
     </div>
@@ -204,50 +231,35 @@ h1,h2,h3,.logo-text,.tab,.an,.akl,.ag-per-label,.meta-label,.ch,.log-wl,.log-sl,
 <!-- FUNNEL -->
 <div id="tab-funnel" class="view">
   <div class="card" style="margin-bottom:10px">
-    <div class="ch">Funnel del mes - EM vs LM</div>
-    <div style="display:grid;grid-template-columns:1fr 1px 1fr;gap:0">
-      <div style="padding-right:18px">
-        <div style="font-size:11px;font-weight:700;color:var(--or);margin-bottom:5px;font-family:'Raleway',sans-serif">EM - Eventos del mes (cualquier cohorte)</div>
-        <div style="font-size:11px;color:var(--mu);margin-bottom:10px">Cotizaciones, visitas y cierres que ocurrieron este mes — de leads de cualquier mes de entrada.</div>
-        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><div style="text-align:center"><div style="background:var(--s2);border-radius:5px;padding:6px 10px"><div style="font-size:16px;font-weight:900;color:var(--tx);font-family:Raleway,sans-serif">2620</div><div style="font-size:10px;color:var(--mu)">Leads</div></div></div><div style="color:var(--mu)">→</div><div style="text-align:center"><div style="background:rgba(247,147,30,.1);border-radius:5px;padding:6px 10px"><div style="font-size:16px;font-weight:900;color:var(--or);font-family:Raleway,sans-serif">536</div><div style="font-size:10px;color:var(--mu)">Cot EM</div></div><div style="font-size:10px;font-weight:700;color:var(--or);text-align:center;margin-top:2px">20.5%</div></div><div style="color:var(--mu)">→</div><div style="text-align:center"><div style="background:rgba(245,158,11,.1);border-radius:5px;padding:6px 10px"><div style="font-size:16px;font-weight:900;color:var(--am);font-family:Raleway,sans-serif">102</div><div style="font-size:10px;color:var(--mu)">Vis EM</div></div><div style="font-size:10px;font-weight:700;color:var(--am);text-align:center;margin-top:2px">19.0%</div></div><div style="color:var(--mu)">→</div><div style="text-align:center"><div style="background:rgba(65,183,79,.1);border-radius:5px;padding:6px 10px"><div style="font-size:16px;font-weight:900;color:var(--gr);font-family:Raleway,sans-serif">8</div><div style="font-size:10px;color:var(--mu)">Cie EM</div></div><div style="font-size:10px;font-weight:700;color:var(--gr);text-align:center;margin-top:2px">7.8%</div></div></div>
-      </div>
-      <div style="background:var(--bd)"></div>
-      <div style="padding-left:18px">
-        <div style="font-size:11px;font-weight:700;color:var(--gl);margin-bottom:5px;font-family:'Raleway',sans-serif">LM - Cohorte del mes (calidad futura)</div>
-        <div style="font-size:11px;color:var(--mu);margin-bottom:10px">De los leads que entraron este mes, cuantos ya avanzaron. Su cierre real sera en ~90 dias.</div>
-        <div style="font-size:11px;color:var(--mu);background:rgba(65,183,79,.04);border-radius:5px;padding:9px">Los leads LM de enero y febrero ya estan en ventana de cierre. Los de marzo cierran en junio 2026. Comparar esta cohorte en junio para ver la conversion real del ciclo completo.</div>
-      </div>
+    <div class="ch">Funnel mensual · Info General 2026</div>
+    <div style="overflow-x:auto">
+    <table class="recon">
+      <thead><tr><th style="text-align:left">Mes</th><th>Leads</th><th>LM Cot</th><th>LM Vis</th><th>LM Cie</th><th>Conv L-C</th><th>Conv C-V</th><th>Conv V-C</th><th>EM Cot</th><th>EM Vis</th><th>EM Cie</th></tr></thead>
+      <tbody>
+        <tr><td>Enero</td><td>420</td><td>55</td><td>11</td><td>5</td><td style='color:#E53935;font-weight:700'>13.1%</td><td style='color:#F7931E;font-weight:700'>20.0%</td><td style='color:#41B74F;font-weight:700'>45.5%</td><td>51</td><td>7</td><td style='color:var(--gr);font-weight:700'>8</td></tr><tr><td>Febrero</td><td>574</td><td>114</td><td>19</td><td>1</td><td style='color:#F7931E;font-weight:700'>19.9%</td><td style='color:#F7931E;font-weight:700'>16.7%</td><td style='color:#E53935;font-weight:700'>5.3%</td><td>100</td><td>21</td><td style='color:var(--gr);font-weight:700'>4</td></tr><tr><td>Marzo</td><td>245</td><td>39</td><td>5</td><td>1</td><td style='color:#F7931E;font-weight:700'>15.9%</td><td style='color:#E53935;font-weight:700'>12.8%</td><td style='color:#F7931E;font-weight:700'>20.0%</td><td>38</td><td>4</td><td style='color:var(--gr);font-weight:700'>1</td></tr>
+      </tbody>
+    </table>
     </div>
   </div>
   <div class="g2">
-    <div class="card"><div class="ch">Leads y cotizaciones - ultimos 7 meses</div><div class="ch-wrap"><canvas id="cMes"></canvas></div></div>
-    <div class="card"><div class="ch">Conversion por etapa - mes a mes</div><div class="ch-wrap"><canvas id="cConv"></canvas></div></div>
+    <div class="card"><div class="ch">Leads y cotizaciones por mes</div><div class="ch-wrap"><canvas id="cMes"></canvas></div></div>
+    <div class="card"><div class="ch">Conversion por etapa · mes a mes</div><div class="ch-wrap"><canvas id="cConv"></canvas></div></div>
   </div>
   <div class="g2">
     <div class="card">
-      <div class="ch">Funnel acumulado - ultimos 3 meses</div>
-      <div class="fr"><div class="fl">Leads</div><div class="ft"><div class="ff" style="width:100%;background:var(--or)"></div></div><div class="fn">2620 - 100%</div></div>
-      <div class="fr"><div class="fl">Cotizaciones</div><div class="ft"><div class="ff" style="width:20.5;background:var(--gr)"></div></div><div class="fn">536 - 20.5%</div></div>
-      <div class="fr"><div class="fl">Visitas</div><div class="ft"><div class="ff" style="width:3.9%;background:var(--am)"></div></div><div class="fn">102 - 3.9%</div></div>
-      <div class="fr"><div class="fl">Cierres</div><div class="ft"><div class="ff" style="width:0.3%;background:var(--re)"></div></div><div class="fn">8 - 0.3%</div></div>
-      <div style="margin-top:10px;padding:9px;background:rgba(229,57,53,.08);border-radius:6px"><div style="font-size:10px;color:var(--mu)">Cuello activo</div><div style="font-size:14px;font-weight:700;color:var(--re);margin-top:2px;font-family:'Raleway',sans-serif">Cotizacion a Visita - 19.0%</div><div style="font-size:11px;color:var(--mu);margin-top:2px">Con flujo WA activo monitorear que suba al 25%+.</div></div>
+      <div class="ch">Funnel acumulado · ultimos 3 meses</div>
+      <div class="fr"><div class="fl">Leads</div><div class="ft"><div class="ff" style="width:100%;background:var(--or)"></div></div><div class="fn">1,239 · 100%</div></div>
+      <div class="fr"><div class="fl">Cotizaciones</div><div class="ft"><div class="ff" style="width:16.8%;background:var(--gr)"></div></div><div class="fn">208 · 16.8%</div></div>
+      <div class="fr"><div class="fl">Visitas</div><div class="ft"><div class="ff" style="width:2.8%;background:var(--am)"></div></div><div class="fn">35 · 2.8%</div></div>
+      <div class="fr"><div class="fl">Cierres</div><div class="ft"><div class="ff" style="width:0.6%;background:var(--re)"></div></div><div class="fn">7 · 0.6%</div></div>
     </div>
     <div class="card">
       <div class="ch">Velocidad del pipeline</div>
-      <div class="vel-g" style="margin-bottom:10px">
+      <div class="vel-g">
         <div class="vel"><div class="velv" style="color:var(--gr)">1d</div><div class="vell">Lead a Cot</div><div class="vels">mediana</div></div>
-        <div class="vel"><div class="velv" style="color:var(--re)">0d</div><div class="vell">Cot a Vis</div><div class="vels">mediana - dato incompleto</div></div>
+        <div class="vel"><div class="velv" style="color:var(--re)">?</div><div class="vell">Cot a Vis</div><div class="vels">sin timestamps</div></div>
         <div class="vel"><div class="velv" style="color:var(--gr)">21d</div><div class="vell">Vis a Cierre</div><div class="vels">mediana</div></div>
       </div>
-      <div class="ch" style="margin-top:6px">Reconciliacion CRM vs EOD</div>
-      <table class="recon">
-        <thead><tr><th style="text-align:left">Mes</th><th>Cot GHL</th><th>Cot EOD</th><th>Delta</th><th>Diagnostico</th></tr></thead>
-        <tbody>
-          <tr><td>Enero</td><td>51</td><td>84</td><td style="color:var(--gr);font-weight:700">+33</td><td style="font-size:10px;color:var(--am)">EOD mayor GHL</td></tr>
-          <tr><td>Febrero</td><td>100</td><td>63</td><td style="color:var(--re);font-weight:700">-37</td><td style="font-size:10px;color:var(--gl)">Alejandro en CRM</td></tr>
-          <tr><td>Marzo</td><td>38</td><td>22</td><td style="color:var(--re);font-weight:700">-16</td><td style="font-size:10px;color:var(--gl)">Alejandro en CRM</td></tr>
-        </tbody>
-      </table>
     </div>
   </div>
 </div>
@@ -255,90 +267,83 @@ h1,h2,h3,.logo-text,.tab,.an,.akl,.ag-per-label,.meta-label,.ch,.log-wl,.log-sl,
 <!-- EQUIPO -->
 <div id="tab-equipo" class="view">
   <div class="ch" style="margin-top:0;margin-bottom:8px">Setter activa</div>
-  <div class="ag-card"><div class="ag-head"><div class="av" style="background:rgba(247,147,30,.15);color:#41B74F">DA</div><div style="flex:1"><div class="an">Dante A.</div><div class="ar">76 dias activos</div></div></div><div class="ag-periods"><div class="ag-per"><div class="ag-per-label">Ultimo mes</div><div class="ag-stats"><div class="ak"><div class="akv">0</div><div class="akl">Llamadas</div></div><div class="ak"><div class="akv" style="color:#41B74F">0.0</div><div class="akl">Llam/dia</div></div><div class="ak"><div class="akv">0</div><div class="akl">Cotiz.</div></div><div class="ak"><div class="akv" style="color:#E53935">0.0%</div><div class="akl">Conv.</div></div></div><div class="meta-row"><div class="meta-label">Llam/dia</div><div class="meta-track"><div class="meta-fill" style="width:0%;background:#E53935"></div></div><span style="font-size:10px;font-weight:700;color:#E53935">0.0/12</span><div class="meta-target">meta: 12</div></div><div class="meta-row"><div class="meta-label">Conv llam->cot</div><div class="meta-track"><div class="meta-fill" style="width:0%;background:#E53935"></div></div><span style="font-size:10px;font-weight:700;color:#E53935">0.0/25.0</span><div class="meta-target">meta: 25.0%</div></div></div><div class="ag-per-divider"></div><div class="ag-per"><div class="ag-per-label cur">Esta semana</div><div class="ag-stats"><div class="ak"><div class="akv" style="color:#E53935">0</div><div class="akl">Llamadas</div></div><div class="ak"><div class="akv" style="color:#E53935">0</div><div class="akl">Llam/dia</div></div><div class="ak"><div class="akv" style="color:#E53935">0</div><div class="akl">Cotiz.</div></div><div class="ak"><div class="akv" style="color:#E53935">0.0%</div><div class="akl">Conv.</div></div></div><div class="meta-row"><div class="meta-label">Meta llamadas</div><div class="meta-track"><div class="meta-fill" style="width:0%;background:#E53935"></div></div><span style="font-size:10px;font-weight:700;color:#E53935">0/60</span><div class="meta-target">meta: 60</div></div><div class="meta-row"><div class="meta-label">Meta cotiz.</div><div class="meta-track"><div class="meta-fill" style="width:0%;background:#E53935"></div></div><span style="font-size:10px;font-weight:700;color:#E53935">0/15</span><div class="meta-target">meta: 15</div></div></div></div></div><div class="ag-card"><div class="ag-head"><div class="av" style="background:rgba(247,147,30,.15);color:#41B74F">LH</div><div style="flex:1"><div class="an">Leo Herrera</div><div class="ar">48 dias activos</div></div></div><div class="ag-periods"><div class="ag-per"><div class="ag-per-label">Ultimo mes</div><div class="ag-stats"><div class="ak"><div class="akv">0</div><div class="akl">Llamadas</div></div><div class="ak"><div class="akv" style="color:#41B74F">0.0</div><div class="akl">Llam/dia</div></div><div class="ak"><div class="akv">0</div><div class="akl">Cotiz.</div></div><div class="ak"><div class="akv" style="color:#E53935">0.0%</div><div class="akl">Conv.</div></div></div><div class="meta-row"><div class="meta-label">Llam/dia</div><div class="meta-track"><div class="meta-fill" style="width:0%;background:#E53935"></div></div><span style="font-size:10px;font-weight:700;color:#E53935">0.0/12</span><div class="meta-target">meta: 12</div></div><div class="meta-row"><div class="meta-label">Conv llam->cot</div><div class="meta-track"><div class="meta-fill" style="width:0%;background:#E53935"></div></div><span style="font-size:10px;font-weight:700;color:#E53935">0.0/25.0</span><div class="meta-target">meta: 25.0%</div></div></div><div class="ag-per-divider"></div><div class="ag-per"><div class="ag-per-label cur">Esta semana</div><div class="ag-stats"><div class="ak"><div class="akv" style="color:#E53935">0</div><div class="akl">Llamadas</div></div><div class="ak"><div class="akv" style="color:#E53935">0</div><div class="akl">Llam/dia</div></div><div class="ak"><div class="akv" style="color:#E53935">0</div><div class="akl">Cotiz.</div></div><div class="ak"><div class="akv" style="color:#E53935">0.0%</div><div class="akl">Conv.</div></div></div><div class="meta-row"><div class="meta-label">Meta llamadas</div><div class="meta-track"><div class="meta-fill" style="width:0%;background:#E53935"></div></div><span style="font-size:10px;font-weight:700;color:#E53935">0/60</span><div class="meta-target">meta: 60</div></div><div class="meta-row"><div class="meta-label">Meta cotiz.</div><div class="meta-track"><div class="meta-fill" style="width:0%;background:#E53935"></div></div><span style="font-size:10px;font-weight:700;color:#E53935">0/15</span><div class="meta-target">meta: 15</div></div></div></div></div><div class="ag-card"><div class="ag-head"><div class="av" style="background:rgba(247,147,30,.15);color:#F7931E">VC</div><div style="flex:1"><div class="an">Val Cardona</div><div class="ar">114 dias activos</div></div></div><div class="ag-periods"><div class="ag-per"><div class="ag-per-label">Ultimo mes</div><div class="ag-stats"><div class="ak"><div class="akv">25</div><div class="akl">Llamadas</div></div><div class="ak"><div class="akv" style="color:#41B74F">4.2</div><div class="akl">Llam/dia</div></div><div class="ak"><div class="akv">22</div><div class="akl">Cotiz.</div></div><div class="ak"><div class="akv" style="color:#41B74F">88.0%</div><div class="akl">Conv.</div></div></div><div class="meta-row"><div class="meta-label">Llam/dia</div><div class="meta-track"><div class="meta-fill" style="width:35%;background:#E53935"></div></div><span style="font-size:10px;font-weight:700;color:#E53935">4.2/12</span><div class="meta-target">meta: 12</div></div><div class="meta-row"><div class="meta-label">Conv llam->cot</div><div class="meta-track"><div class="meta-fill" style="width:100%;background:#41B74F"></div></div><span style="font-size:10px;font-weight:700;color:#41B74F">88.0/25.0 ok</span><div class="meta-target">meta: 25.0%</div></div></div><div class="ag-per-divider"></div><div class="ag-per"><div class="ag-per-label cur">Esta semana</div><div class="ag-stats"><div class="ak"><div class="akv" style="color:#E53935">4</div><div class="akl">Llamadas</div></div><div class="ak"><div class="akv" style="color:#E53935">4.0</div><div class="akl">Llam/dia</div></div><div class="ak"><div class="akv" style="color:#E53935">5</div><div class="akl">Cotiz.</div></div><div class="ak"><div class="akv" style="color:#41B74F">125.0%</div><div class="akl">Conv.</div></div></div><div class="meta-row"><div class="meta-label">Meta llamadas</div><div class="meta-track"><div class="meta-fill" style="width:6%;background:#E53935"></div></div><span style="font-size:10px;font-weight:700;color:#E53935">4/60</span><div class="meta-target">meta: 60</div></div><div class="meta-row"><div class="meta-label">Meta cotiz.</div><div class="meta-track"><div class="meta-fill" style="width:33%;background:#E53935"></div></div><span style="font-size:10px;font-weight:700;color:#E53935">5/15</span><div class="meta-target">meta: 15</div></div></div></div></div>
+  <div class="ag-card"><div class="ag-head"><div class="av" style="background:rgba(247,147,30,.15);color:#F7931E">DA</div><div style="flex:1"><div class="an">Dante A.</div><div class="ar">76 dias activos</div></div></div><div class="ag-periods"><div class="ag-per"><div class="ag-per-label">Ultimo mes</div><div class="ag-stats"><div class="ak"><div class="akv">0</div><div class="akl">Llamadas</div></div><div class="ak"><div class="akv" style="color:#E53935">0.0</div><div class="akl">Llam/dia</div></div><div class="ak"><div class="akv">0</div><div class="akl">Cotiz.</div></div><div class="ak"><div class="akv" style="color:#E53935">0.0%</div><div class="akl">Conv.</div></div></div><div class="meta-row"><div class="meta-label">Llam/dia</div><div class="meta-track"><div class="meta-fill" style="width:0%;background:#E53935"></div></div><span style="font-size:10px;font-weight:700;color:#E53935">0.0/16</span><div class="meta-target">meta:16</div></div><div class="meta-row"><div class="meta-label">Conv llam-cot</div><div class="meta-track"><div class="meta-fill" style="width:0%;background:#E53935"></div></div><span style="font-size:10px;font-weight:700;color:#E53935">0.0/25.0</span><div class="meta-target">meta:25.0%</div></div></div><div class="ag-per-divider"></div><div class="ag-per"><div class="ag-per-label cur">Esta semana</div><div class="ag-stats"><div class="ak"><div class="akv" style="color:#E53935">0</div><div class="akl">Llamadas</div></div><div class="ak"><div class="akv" style="color:#E53935">0</div><div class="akl">Llam/dia</div></div><div class="ak"><div class="akv" style="color:#E53935">0</div><div class="akl">Cotiz.</div></div><div class="ak"><div class="akv" style="color:#E53935">0.0%</div><div class="akl">Conv.</div></div></div><div class="meta-row"><div class="meta-label">Meta llamadas</div><div class="meta-track"><div class="meta-fill" style="width:0%;background:#E53935"></div></div><span style="font-size:10px;font-weight:700;color:#E53935">0/80</span><div class="meta-target">meta:80</div></div><div class="meta-row"><div class="meta-label">Meta cotiz.</div><div class="meta-track"><div class="meta-fill" style="width:0%;background:#E53935"></div></div><span style="font-size:10px;font-weight:700;color:#E53935">0/24</span><div class="meta-target">meta:24</div></div></div></div></div><div class="ag-card"><div class="ag-head"><div class="av" style="background:rgba(247,147,30,.15);color:#F7931E">LH</div><div style="flex:1"><div class="an">Leo Herrera</div><div class="ar">48 dias activos</div></div></div><div class="ag-periods"><div class="ag-per"><div class="ag-per-label">Ultimo mes</div><div class="ag-stats"><div class="ak"><div class="akv">0</div><div class="akl">Llamadas</div></div><div class="ak"><div class="akv" style="color:#E53935">0.0</div><div class="akl">Llam/dia</div></div><div class="ak"><div class="akv">0</div><div class="akl">Cotiz.</div></div><div class="ak"><div class="akv" style="color:#E53935">0.0%</div><div class="akl">Conv.</div></div></div><div class="meta-row"><div class="meta-label">Llam/dia</div><div class="meta-track"><div class="meta-fill" style="width:0%;background:#E53935"></div></div><span style="font-size:10px;font-weight:700;color:#E53935">0.0/16</span><div class="meta-target">meta:16</div></div><div class="meta-row"><div class="meta-label">Conv llam-cot</div><div class="meta-track"><div class="meta-fill" style="width:0%;background:#E53935"></div></div><span style="font-size:10px;font-weight:700;color:#E53935">0.0/25.0</span><div class="meta-target">meta:25.0%</div></div></div><div class="ag-per-divider"></div><div class="ag-per"><div class="ag-per-label cur">Esta semana</div><div class="ag-stats"><div class="ak"><div class="akv" style="color:#E53935">0</div><div class="akl">Llamadas</div></div><div class="ak"><div class="akv" style="color:#E53935">0</div><div class="akl">Llam/dia</div></div><div class="ak"><div class="akv" style="color:#E53935">0</div><div class="akl">Cotiz.</div></div><div class="ak"><div class="akv" style="color:#E53935">0.0%</div><div class="akl">Conv.</div></div></div><div class="meta-row"><div class="meta-label">Meta llamadas</div><div class="meta-track"><div class="meta-fill" style="width:0%;background:#E53935"></div></div><span style="font-size:10px;font-weight:700;color:#E53935">0/80</span><div class="meta-target">meta:80</div></div><div class="meta-row"><div class="meta-label">Meta cotiz.</div><div class="meta-track"><div class="meta-fill" style="width:0%;background:#E53935"></div></div><span style="font-size:10px;font-weight:700;color:#E53935">0/24</span><div class="meta-target">meta:24</div></div></div></div></div><div class="ag-card"><div class="ag-head"><div class="av" style="background:rgba(247,147,30,.15);color:#F7931E">VC</div><div style="flex:1"><div class="an">Val Cardona</div><div class="ar">114 dias activos</div></div></div><div class="ag-periods"><div class="ag-per"><div class="ag-per-label">Ultimo mes</div><div class="ag-stats"><div class="ak"><div class="akv">25</div><div class="akl">Llamadas</div></div><div class="ak"><div class="akv" style="color:#E53935">4.2</div><div class="akl">Llam/dia</div></div><div class="ak"><div class="akv">22</div><div class="akl">Cotiz.</div></div><div class="ak"><div class="akv" style="color:#41B74F">88.0%</div><div class="akl">Conv.</div></div></div><div class="meta-row"><div class="meta-label">Llam/dia</div><div class="meta-track"><div class="meta-fill" style="width:26%;background:#E53935"></div></div><span style="font-size:10px;font-weight:700;color:#E53935">4.2/16</span><div class="meta-target">meta:16</div></div><div class="meta-row"><div class="meta-label">Conv llam-cot</div><div class="meta-track"><div class="meta-fill" style="width:100%;background:#41B74F"></div></div><span style="font-size:10px;font-weight:700;color:#41B74F">88.0/25.0 ok</span><div class="meta-target">meta:25.0%</div></div></div><div class="ag-per-divider"></div><div class="ag-per"><div class="ag-per-label cur">Esta semana</div><div class="ag-stats"><div class="ak"><div class="akv" style="color:#E53935">4</div><div class="akl">Llamadas</div></div><div class="ak"><div class="akv" style="color:#E53935">4.0</div><div class="akl">Llam/dia</div></div><div class="ak"><div class="akv" style="color:#E53935">5</div><div class="akl">Cotiz.</div></div><div class="ak"><div class="akv" style="color:#41B74F">125.0%</div><div class="akl">Conv.</div></div></div><div class="meta-row"><div class="meta-label">Meta llamadas</div><div class="meta-track"><div class="meta-fill" style="width:5%;background:#E53935"></div></div><span style="font-size:10px;font-weight:700;color:#E53935">4/80</span><div class="meta-target">meta:80</div></div><div class="meta-row"><div class="meta-label">Meta cotiz.</div><div class="meta-track"><div class="meta-fill" style="width:20%;background:#E53935"></div></div><span style="font-size:10px;font-weight:700;color:#E53935">5/24</span><div class="meta-target">meta:24</div></div></div></div></div>
   <div class="ch" style="margin-top:4px;margin-bottom:8px">Closer</div>
   <div class="ag-card">
     <div class="ag-head">
       <div class="av" style="background:rgba(65,183,79,.15);color:var(--gr)">AB</div>
-      <div style="flex:1"><div class="an">Alejandro B. (Fundador) <span style="font-size:9px;padding:2px 7px;border-radius:3px;background:rgba(65,183,79,.15);color:var(--gr);margin-left:6px;font-weight:700;font-family:'Raleway',sans-serif">CLOSER</span></div><div class="ar">Actualiza CRM directamente - sin EOD de setter</div></div>
+      <div style="flex:1"><div class="an">Alejandro B. (Fundador) <span style="font-size:9px;padding:2px 7px;border-radius:3px;background:rgba(65,183,79,.15);color:var(--gr);margin-left:6px;font-weight:700;font-family:'Raleway',sans-serif">CLOSER</span></div><div class="ar">Actualiza CRM directamente</div></div>
     </div>
-    <div class="ag-periods">
-      <div class="ag-per"><div class="ag-per-label">Ultimo mes - Febrero 2026</div>
-        <div class="ag-stats">
-          <div class="ak"><div class="akv" style="color:var(--re)">1</div><div class="akl">Cierres</div></div>
-          <div class="ak"><div class="akv">21</div><div class="akl">Vis. agend.</div></div>
-          <div class="ak"><div class="akv" style="color:var(--re)">4.8%</div><div class="akl">Vis-Cie</div></div>
-          <div class="ak"><div class="akv" style="color:var(--mu)">-</div><div class="akl">EOD</div></div>
-        </div>
-        <div class="meta-row"><div class="meta-label">Meta cierres/mes</div><div class="meta-track"><div class="meta-fill" style="width:25%;background:var(--re)"></div></div><span style="font-size:10px;font-weight:700;color:var(--re)">1/4</span><div class="meta-target">meta: 4</div></div>
-      </div>
-      <div class="ag-per-divider"></div>
-      <div class="ag-per"><div class="ag-per-label cur">Esta semana</div>
-        <div class="ag-stats">
-          <div class="ak"><div class="akv" style="color:var(--gr)">1</div><div class="akl">Cierres</div></div>
-          <div class="ak"><div class="akv">2</div><div class="akl">Vis. agend.</div></div>
-          <div class="ak"><div class="akv" style="color:var(--gr)">50%</div><div class="akl">Vis-Cie</div></div>
-          <div class="ak"><div class="akv" style="color:var(--mu)">-</div><div class="akl">EOD</div></div>
-        </div>
-        <div class="meta-row"><div class="meta-label">Meta cierres/sem</div><div class="meta-track"><div class="meta-fill" style="width:100%;background:var(--gr)"></div></div><span style="font-size:10px;font-weight:700;color:var(--gr)">1/1 ok</span><div class="meta-target">meta: 1</div></div>
-        <div style="margin-top:8px;padding:7px 9px;background:rgba(65,183,79,.07);border-radius:5px;font-size:11px;color:var(--mu)">Lead de dic 2025 cerrado - ciclo 90 dias confirmado operativamente.</div>
-      </div>
+    <div class="ag-stats">
+      <div class="ak"><div class="akv" style="color:var(--gr)">7</div><div class="akl">Cierres 3m</div></div>
+      <div class="ak"><div class="akv">35</div><div class="akl">Vis. 3m</div></div>
+      <div class="ak"><div class="akv" style="color:var(--gr)">20.0%</div><div class="akl">Vis-Cie %</div></div>
+      <div class="ak"><div class="akv" style="color:var(--mu)">—</div><div class="akl">EOD</div></div>
     </div>
   </div>
   <div class="card" style="margin-top:10px">
-    <div class="ch">Actividad semanal EOD - ultimas 8 semanas</div>
+    <div class="ch">Actividad semanal EOD · ultimas 8 semanas</div>
     <div class="ch-wrap"><canvas id="cEOD"></canvas></div>
   </div>
 </div>
 
-<!-- FUENTES Y ADS -->
+<!-- FUENTES -->
 <div id="tab-fuentes" class="view">
   <div class="card" style="margin-bottom:10px">
-    <div class="ch" style="color:var(--or)">Calidad real por anuncio - CPL de entrada vs conversion al fondo del funnel</div>
-    <div style="font-size:11px;color:var(--mu);margin-bottom:10px">El CPL de entrada dice cuanto cuesta el lead. La calidad real se mide por cuantos de esos leads cotizan, visitan y cierran. Un lead barato que no cierra cuesta mas que uno caro que si cierra.</div>
+    <div class="ch" style="color:var(--or)">Calidad por anuncio · CPL entrada vs conversion real</div>
+    <div style="font-size:11px;color:var(--mu);margin-bottom:10px">El CPL de entrada no dice nada sobre calidad. Lo que importa es cuantos de esos leads cotizan, visitan y cierran.</div>
+    <div style="overflow-x:auto">
     <table class="quality-table">
-      <thead><tr><th>Anuncio</th><th>Leads</th><th>CPL entrada</th><th>Conv a Cot%</th><th>Conv a Vis%</th><th>Conv a Cie%</th><th>CPL real*</th><th>Veredicto</th></tr></thead>
-      <tbody><tr><td style='text-align:left;font-weight:600;font-size:12px'>AD 9 | Último minuto</td><td style='font-size:12px'>162</td><td style='font-size:12px;font-weight:600;color:#E53935'>$15416</td><td><span style='color:#555'>—</span></td><td><span style='color:#555'>—</span></td><td><span style='color:#555'>—</span></td><td style='font-size:12px;font-weight:700;color:#41B74F'>—</td><td><span style='font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;background:#2A2A2A;color:#888'>Sin datos</span></td></tr><tr><td style='text-align:left;font-weight:600;font-size:12px'>AD 2 | Pago Año</td><td style='font-size:12px'>91</td><td style='font-size:12px;font-weight:600;color:#E53935'>$22546</td><td><div style="display:flex;align-items:center;gap:5px"><div style="width:40px;background:#2A2A2A;border-radius:2px;height:5px;overflow:hidden;flex-shrink:0"><div style="height:100%;border-radius:2px;width:100%;background:#41B74F"></div></div><span style="color:#41B74F;font-weight:700;font-size:11px">100.0%</span></div></td><td><span style='color:#555'>—</span></td><td><span style='color:#555'>—</span></td><td style='font-size:12px;font-weight:700;color:#41B74F'>—</td><td><span style='font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;background:#2A2A2A;color:#888'>Sin datos</span></td></tr><tr><td style='text-align:left;font-weight:600;font-size:12px'>AD 1 | Carro pregunta</td><td style='font-size:12px'>40</td><td style='font-size:12px;font-weight:600;color:#E53935'>$20454</td><td><div style="display:flex;align-items:center;gap:5px"><div style="width:40px;background:#2A2A2A;border-radius:2px;height:5px;overflow:hidden;flex-shrink:0"><div style="height:100%;border-radius:2px;width:100%;background:#41B74F"></div></div><span style="color:#41B74F;font-weight:700;font-size:11px">66.7%</span></div></td><td><span style='color:#555'>—</span></td><td><span style='color:#555'>—</span></td><td style='font-size:12px;font-weight:700;color:#41B74F'>—</td><td><span style='font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;background:#2A2A2A;color:#888'>Sin datos</span></td></tr><tr><td style='text-align:left;font-weight:600;font-size:12px'>AD 7 | Carisimo</td><td style='font-size:12px'>44</td><td style='font-size:12px;font-weight:600;color:#F7931E'>$8498</td><td><div style="display:flex;align-items:center;gap:5px"><div style="width:40px;background:#2A2A2A;border-radius:2px;height:5px;overflow:hidden;flex-shrink:0"><div style="height:100%;border-radius:2px;width:100%;background:#41B74F"></div></div><span style="color:#41B74F;font-weight:700;font-size:11px">100.0%</span></div></td><td><div style="display:flex;align-items:center;gap:5px"><div style="width:40px;background:#2A2A2A;border-radius:2px;height:5px;overflow:hidden;flex-shrink:0"><div style="height:100%;border-radius:2px;width:100%;background:#41B74F"></div></div><span style="color:#41B74F;font-weight:700;font-size:11px">50.0%</span></div></td><td><span style='color:#555'>—</span></td><td style='font-size:12px;font-weight:700;color:#41B74F'>—</td><td><span style='font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;background:#2A2A2A;color:#888'>Sin datos</span></td></tr><tr><td style='text-align:left;font-weight:600;font-size:12px'>AD 6 | Cae Negocio</td><td style='font-size:12px'>8</td><td style='font-size:12px;font-weight:600;color:#E53935'>$21127</td><td><span style='color:#555'>—</span></td><td><span style='color:#555'>—</span></td><td><span style='color:#555'>—</span></td><td style='font-size:12px;font-weight:700;color:#41B74F'>—</td><td><span style='font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;background:#2A2A2A;color:#888'>Sin datos</span></td></tr><tr><td style='text-align:left;font-weight:600;font-size:12px'>AD 8 | Fincas</td><td style='font-size:12px'>3</td><td style='font-size:12px;font-weight:600;color:#E53935'>$16793</td><td><span style='color:#555'>—</span></td><td><span style='color:#555'>—</span></td><td><span style='color:#555'>—</span></td><td style='font-size:12px;font-weight:700;color:#41B74F'>—</td><td><span style='font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;background:#2A2A2A;color:#888'>Sin datos</span></td></tr></tbody>
+      <thead><tr><th>Anuncio</th><th>Leads</th><th>CPL entrada</th><th>Cot%</th><th>Vis%</th><th>Cie%</th><th>CPL real*</th><th>Verdict.</th></tr></thead>
+      <tbody><tr><td style='text-align:left;font-weight:600;font-size:11px'>AD 9 | Último minuto</td><td>162</td><td style='color:#E53935;font-weight:700'>$15,416</td><td><div style="display:flex;align-items:center;gap:5px"><div style="width:36px;background:#2A2A2A;border-radius:2px;height:5px;overflow:hidden;flex-shrink:0"><div style="height:100%;border-radius:2px;width:100%;background:#41B74F"></div></div><span style="color:#41B74F;font-weight:700;font-size:11px">100.0%</span></div></td><td><div style="display:flex;align-items:center;gap:5px"><div style="width:36px;background:#2A2A2A;border-radius:2px;height:5px;overflow:hidden;flex-shrink:0"><div style="height:100%;border-radius:2px;width:40%;background:#F7931E"></div></div><span style="color:#F7931E;font-weight:700;font-size:11px">14.3%</span></div></td><td><span style=color:#555>—</span></td><td style='color:#41B74F;font-weight:700'>—</td><td><span style='font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;background:#2A2A2A;color:#888'>Sin datos</span></td></tr><tr><td style='text-align:left;font-weight:600;font-size:11px'>AD 2 | Pago Año</td><td>91</td><td style='color:#E53935;font-weight:700'>$22,546</td><td><div style="display:flex;align-items:center;gap:5px"><div style="width:36px;background:#2A2A2A;border-radius:2px;height:5px;overflow:hidden;flex-shrink:0"><div style="height:100%;border-radius:2px;width:100%;background:#41B74F"></div></div><span style="color:#41B74F;font-weight:700;font-size:11px">100.0%</span></div></td><td><span style=color:#555>—</span></td><td><span style=color:#555>—</span></td><td style='color:#41B74F;font-weight:700'>—</td><td><span style='font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;background:#2A2A2A;color:#888'>Sin datos</span></td></tr><tr><td style='text-align:left;font-weight:600;font-size:11px'>AD 1 | Carro pregunta</td><td>40</td><td style='color:#E53935;font-weight:700'>$20,454</td><td><div style="display:flex;align-items:center;gap:5px"><div style="width:36px;background:#2A2A2A;border-radius:2px;height:5px;overflow:hidden;flex-shrink:0"><div style="height:100%;border-radius:2px;width:100%;background:#41B74F"></div></div><span style="color:#41B74F;font-weight:700;font-size:11px">66.7%</span></div></td><td><span style=color:#555>—</span></td><td><span style=color:#555>—</span></td><td style='color:#41B74F;font-weight:700'>—</td><td><span style='font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;background:#2A2A2A;color:#888'>Sin datos</span></td></tr><tr><td style='text-align:left;font-weight:600;font-size:11px'>AD 7 | Carisimo</td><td>44</td><td style='color:#F7931E;font-weight:700'>$8,498</td><td><div style="display:flex;align-items:center;gap:5px"><div style="width:36px;background:#2A2A2A;border-radius:2px;height:5px;overflow:hidden;flex-shrink:0"><div style="height:100%;border-radius:2px;width:100%;background:#41B74F"></div></div><span style="color:#41B74F;font-weight:700;font-size:11px">100.0%</span></div></td><td><div style="display:flex;align-items:center;gap:5px"><div style="width:36px;background:#2A2A2A;border-radius:2px;height:5px;overflow:hidden;flex-shrink:0"><div style="height:100%;border-radius:2px;width:100%;background:#41B74F"></div></div><span style="color:#41B74F;font-weight:700;font-size:11px">50.0%</span></div></td><td><span style=color:#555>—</span></td><td style='color:#41B74F;font-weight:700'>—</td><td><span style='font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;background:#2A2A2A;color:#888'>Sin datos</span></td></tr><tr><td style='text-align:left;font-weight:600;font-size:11px'>AD 6 | Cae Negocio</td><td>8</td><td style='color:#E53935;font-weight:700'>$21,127</td><td><span style=color:#555>—</span></td><td><span style=color:#555>—</span></td><td><span style=color:#555>—</span></td><td style='color:#41B74F;font-weight:700'>—</td><td><span style='font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;background:#2A2A2A;color:#888'>Sin datos</span></td></tr><tr><td style='text-align:left;font-weight:600;font-size:11px'>AD 8 | Fincas</td><td>3</td><td style='color:#E53935;font-weight:700'>$16,793</td><td><span style=color:#555>—</span></td><td><span style=color:#555>—</span></td><td><span style=color:#555>—</span></td><td style='color:#41B74F;font-weight:700'>—</td><td><span style='font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;background:#2A2A2A;color:#888'>Sin datos</span></td></tr></tbody>
     </table>
-    <div style="margin-top:10px;padding:8px 10px;background:var(--s2);border-radius:6px;font-size:11px;color:var(--mu)"><b style="color:var(--tx)">CPL real</b> = CPL entrada dividido tasa de cierre. Es lo que costo realmente cada cierre generado por ese anuncio. <b style="color:var(--am)">Nota: datos estimados hasta activar UTMs en GHL</b> - cruce aproximado por campo Content.</div>
+    </div>
+    <div style="margin-top:10px;padding:8px 10px;background:var(--s2);border-radius:6px;font-size:11px;color:var(--mu)"><b style="color:var(--tx)">CPL real</b> = CPL entrada / tasa de cierre. <b style="color:var(--am)">Estimado hasta activar UTMs en GHL.</b></div>
   </div>
   <div class="g2">
-    <div class="card"><div class="ch">Leads por anuncio</div><div class="ch-wrap"><canvas id="cAL"></canvas></div></div>
+    <div class="card"><div class="ch">Leads por anuncio (Form)</div><div class="ch-wrap"><canvas id="cAL"></canvas></div></div>
     <div class="card"><div class="ch">CPL real por cierre ($COP)</div><div class="ch-wrap"><canvas id="cAC"></canvas></div></div>
   </div>
 </div>
 
-<!-- ACTIVITY LOG -->
+<!-- LOG -->
 <div id="tab-log" class="view">
   <div style="background:var(--s2);border-radius:7px;padding:10px 12px;margin-bottom:12px;font-size:11px;color:var(--mu)">
-    <b style="color:var(--or)">Flujo:</b> Escribes la decision del lunes directamente en Google Sheets - pestana <code style="background:var(--s3);padding:1px 5px;border-radius:3px;color:var(--gl)">Log_Semanal</code>. El script la lee cada semana y muestra la consecuencia en numeros automaticamente.
+    <b style="color:var(--or)">Flujo:</b> Escribes la decision en Google Sheets pestana <code style="background:var(--s3);padding:1px 5px;border-radius:3px;color:var(--gl)">Log_Semanal</code>. El script la lee y muestra la consecuencia en numeros automaticamente.
   </div>
-  <div class="log-e log-cur"><div class="log-wl">2026-W09 · HOY · Feb 24–Mar 1</div><div class="log-chips"><span class="lc lca">Llamadas 41</span><span class="lc lcr">Cot. 8</span><span class="lc lcg">Visitas 3</span><span class="lc lcg">Cierres 1</span></div><div class="log-sl">Decision</div><div class="log-box log-dec">Val consiguió 3 visitas esta semana (record). Documentar cómo lo hizo.</div><div class="log-sl" style="margin-top:6px">Se ejecuto?</div><div class="log-box log-eje">PARCIAL — se documentó informalmente pero no se formalizó.</div><div class="log-sl" style="margin-top:6px">Consecuencia en numeros</div><div class="log-box log-con">Semana siguiente bajó a 1 visita. La técnica de Val no se replicó.</div></div><div class="log-e"><div class="log-wl">2026-W10 · Mar 3–9</div><div class="log-chips"><span class="lc lcr">Llamadas 35</span><span class="lc lca">Cot. 11</span><span class="lc lcr">Visitas 1</span></div><div class="log-sl">Decision</div><div class="log-box log-dec">Investigar por qué Cot→Vis bajó a 9% esta semana a pesar de más cotizaciones. Revisar si el flujo post-cot está activo.</div><div class="log-sl" style="margin-top:6px">Se ejecuto?</div><div class="log-box log-eje">SI — se revisó el flujo. Estaba activo pero con demora en el primer mensaje.</div><div class="log-sl" style="margin-top:6px">Consecuencia en numeros</div><div class="log-box log-con">Llamadas subieron a 47 (+34%). Cotizaciones cayeron a 9. Cot→Vis subió a 22% — el ajuste del flujo WA tuvo efecto.</div></div><div class="log-e"><div class="log-wl">2026-W11 · Mar 10–16</div><div class="log-chips"><span class="lc lca">Llamadas 47</span><span class="lc lca">Cot. 9</span><span class="lc lca">Visitas 2</span><span class="lc lcg">Cierres 1</span></div><div class="log-sl">Decision</div><div class="log-box log-dec">Verificar si el flujo WA post-cotización está disparando correctamente. Revisar calidad de leads de AD 9 — más llamadas, menos cotizaciones.</div></div>
+  <div class="log-e log-cur"><div class="log-wl">2026-W09  HOY  Feb 24–Mar 1</div><div class="log-chips"><span class="lc lcr">Llamadas 41</span><span class="lc lcr">Cot. 8</span><span class="lc lcr">Vis. 3</span><span class="lc lcr">Cierres 1</span></div><div class="log-sl">Decision</div><div class="log-box log-dec">Val consiguió 3 visitas esta semana (record). Documentar cómo lo hizo.</div><div class="log-sl" style="margin-top:6px">Se ejecuto?</div><div class="log-box log-eje">PARCIAL — se documentó informalmente pero no se formalizó.</div><div class="log-sl" style="margin-top:6px">Consecuencia en numeros</div><div class="log-box log-con">Semana siguiente bajó a 1 visita. La técnica de Val no se replicó.</div></div><div class="log-e"><div class="log-wl">2026-W10  Mar 3–9</div><div class="log-chips"><span class="lc lcr">Llamadas 35</span><span class="lc lcr">Cot. 11</span><span class="lc lcr">Vis. 1</span></div><div class="log-sl">Decision</div><div class="log-box log-dec">Investigar por qué Cot→Vis bajó a 9% esta semana a pesar de más cotizaciones. Revisar si el flujo post-cot está activo.</div><div class="log-sl" style="margin-top:6px">Se ejecuto?</div><div class="log-box log-eje">SI — se revisó el flujo. Estaba activo pero con demora en el primer mensaje.</div><div class="log-sl" style="margin-top:6px">Consecuencia en numeros</div><div class="log-box log-con">Llamadas subieron a 47 (+34%). Cotizaciones cayeron a 9. Cot→Vis subió a 22% — el ajuste del flujo WA tuvo efecto.</div></div><div class="log-e"><div class="log-wl">2026-W11  Mar 10–16</div><div class="log-chips"><span class="lc lcr">Llamadas 47</span><span class="lc lcr">Cot. 9</span><span class="lc lcr">Vis. 2</span><span class="lc lcr">Cierres 1</span></div><div class="log-sl">Decision</div><div class="log-box log-dec">Verificar si el flujo WA post-cotización está disparando correctamente. Revisar calidad de leads de AD 9 — más llamadas, menos cotizaciones.</div></div>
 </div>
 
 <!-- BLUEPRINT -->
 <div id="tab-blueprint" class="view">
   <div class="card" style="margin-bottom:10px">
-    <div class="ch" style="color:var(--or)">Estado actual - resuelto vs pendiente</div>
-    <div class="bp-row"><div class="bp-n">v</div><div><div class="bp-t">Flujo WA post-cotizacion activo</div><div class="bp-d">Cot-Vis mejoro tras ajustar timing. Efecto directo confirmado.</div><span class="bptag bp-done">ACTIVO</span></div><div><div class="bp-a">Meta: mantener Cot-Vis mayor al 25% sostenido. Si cae revisar timing y contenido del mensaje.</div></div></div>
-    <div class="bp-row"><div class="bp-n">v</div><div><div class="bp-t">Opportunity Value en GHL</div><div class="bp-d">Activado desde ahora. Pipeline Value calculable en 4 semanas.</div><span class="bptag bp-done">ACTIVO</span></div><div><div class="bp-a">En 4 semanas: ticket promedio real, Pipeline Value COP, Pipeline Velocity.</div></div></div>
-    <div class="bp-row"><div class="bp-n">></div><div><div class="bp-t">UTMs en forms GHL</div><div class="bp-d">71% de leads sin fuente. Sin esto el CPL real y el ROAS son estimaciones. Una tarde de setup.</div><span class="bptag bp-act">PENDIENTE - esta semana</span></div><div><div class="bp-a">Con UTMs: el tab Fuentes pasa de estimaciones a datos exactos. La tabla de calidad por ad se vuelve 100% confiable.</div></div></div>
-    <div class="bp-row"><div class="bp-n">></div><div><div class="bp-t">SOP script de agendamiento de Val</div><div class="bp-d">Val logro 3 visitas en una semana. Sin SOP ese conocimiento no se replica.</div><span class="bptag bp-act">PENDIENTE - esta semana</span></div><div><div class="bp-a">Documentar en formato guion + checklist. Impacto directo si se incorpora un nuevo setter.</div></div></div>
-    <div class="bp-row"><div class="bp-n">></div><div><div class="bp-t">Campana reactivacion leads dic 2025</div><div class="bp-d">Los leads de dic estan en ventana de cierre de 90 dias ahora mismo.</div><span class="bptag bp-act">ESTA SEMANA</span></div><div><div class="bp-a">Filtrar leads dic 2025 en etapa Cotizacion en GHL - campana WA de Alejandro. Cierres potenciales de las proximas 2 semanas.</div></div></div>
+    <div class="ch" style="color:var(--or)">Estado actual · resuelto vs pendiente</div>
+    <div class="bp-row"><div class="bp-n">v</div><div><div class="bp-t">Flujo WA post-cotizacion activo</div><div class="bp-d">Cot-Vis mejoro. Monitorear sostenimiento.</div><span class="bptag bp-done">ACTIVO</span></div><div><div class="bp-a">Meta: mantener Cot-Vis mayor al 25.0% sostenido.</div></div></div>
+    <div class="bp-row"><div class="bp-n">v</div><div><div class="bp-t">Opportunity Value en GHL</div><div class="bp-d">Activado. Pipeline Value calculable en 4 semanas.</div><span class="bptag bp-done">ACTIVO</span></div><div><div class="bp-a">En 4 semanas: ticket promedio real, Pipeline Value COP.</div></div></div>
+    <div class="bp-row"><div class="bp-n">></div><div><div class="bp-t">UTMs en forms GHL</div><div class="bp-d">71% leads sin fuente. CPL real incalculable.</div><span class="bptag bp-act">PENDIENTE</span></div><div><div class="bp-a">Con UTMs: la tabla de calidad por ad pasa de estimaciones a datos exactos.</div></div></div>
+    <div class="bp-row"><div class="bp-n">></div><div><div class="bp-t">SOP script de agendamiento de Val</div><div class="bp-d">Val logro 3 visitas en una semana. Sin SOP ese conocimiento no se replica.</div><span class="bptag bp-act">PENDIENTE</span></div><div><div class="bp-a">Documentar en formato guion + checklist.</div></div></div>
+    <div class="bp-row"><div class="bp-n">></div><div><div class="bp-t">Campana reactivacion leads dic 2025</div><div class="bp-d">Leads dic en ventana de cierre de 90 dias ahora mismo.</div><span class="bptag bp-act">ESTA SEMANA</span></div><div><div class="bp-a">Filtrar en GHL y campana WA de Alejandro.</div></div></div>
   </div>
   <div class="card">
-    <div class="ch" style="color:var(--gr)">Roadmap - proximos 3 meses</div>
+    <div class="ch" style="color:var(--gr)">Roadmap · proximos 3 meses</div>
     <div class="rm">
-      <div class="rmc"><div class="rml" style="color:var(--or)">Esta semana</div><div class="rmi">v Flujo WA activo<br>v Opportunity Value<br>> UTMs en forms<br>> SOP Val<br>> Reactivar leads dic</div></div>
-      <div class="rmc"><div class="rml" style="color:var(--am)">Mes 1</div><div class="rmi">> Ticket promedio real<br>> Pipeline Value COP<br>> CPL real exacto<br>> Dashboard 100% real</div></div>
-      <div class="rmc"><div class="rml" style="color:var(--gl)">Mes 2</div><div class="rmi">> Pipeline Velocity COP<br>> CAC por canal<br>> Alert leads zombies<br>> Reporte semanal auto</div></div>
-      <div class="rmc"><div class="rml" style="color:var(--gr)">Mes 3</div><div class="rmi">> Dashboard agencia global<br>> Integracion Apify<br>> Comisiones vs cierres CRM</div></div>
+      <div class="rmc"><div class="rml" style="color:var(--or)">Esta semana</div><div class="rmi">v Flujo WA activo<br>v Opportunity Value<br>&gt; UTMs en forms<br>&gt; SOP Val<br>&gt; Reactivar leads dic</div></div>
+      <div class="rmc"><div class="rml" style="color:var(--am)">Mes 1</div><div class="rmi">&gt; Ticket promedio real<br>&gt; Pipeline Value COP<br>&gt; CPL real exacto<br>&gt; Dashboard 100% real</div></div>
+      <div class="rmc"><div class="rml" style="color:var(--gl)">Mes 2</div><div class="rmi">&gt; Pipeline Velocity COP<br>&gt; CAC por canal<br>&gt; Alert leads zombies<br>&gt; Reporte semanal auto</div></div>
+      <div class="rmc"><div class="rml" style="color:var(--gr)">Mes 3</div><div class="rmi">&gt; Dashboard agencia global<br>&gt; Integracion Apify<br>&gt; Comisiones vs cierres CRM</div></div>
     </div>
   </div>
 </div>
 
 </div>
-<footer class="ftr">COPERNICO - Energia Renovable - Sistema de Inteligencia Comercial - Actualizado automaticamente cada semana</footer>
+
+<footer class="ftr">
+  <div class="ftr-main">COPERNICO · Energia Renovable · Sistema de Inteligencia Comercial · Actualizado automaticamente cada semana</div>
+  <div class="ftr-brand">
+    <span class="ftr-dev">Desarrollado por</span>
+    <a href="https://groma.com.co/" target="_blank" class="ftr-link">GROMA AGENCY</a>
+  </div>
+</footer>
 
 <script>
 function go(id,btn){
@@ -353,22 +358,22 @@ const tx=()=>'#555';const gc=()=>'rgba(255,255,255,0.04)';
 const B={responsive:true,maintainAspectRatio:false,
   plugins:{legend:{labels:{color:'#777',font:{size:10},boxWidth:10}}},
   scales:{x:{ticks:{color:tx(),font:{size:10}},grid:{color:gc()}},
-          y:{ticks:{color:tx(),font:{size:10}},grid:{color:gc()}}}};
+           y:{ticks:{color:tx(),font:{size:10}},grid:{color:gc()}}}};
 function buildF(){window._f=1;
   new Chart(document.getElementById('cMes'),{type:'bar',data:{
-    labels:["2026-06", "2026-07", "2026-08", "2026-09", "2026-10", "2026-11", "2026-12"],
+    labels:["Ene", "Feb", "Mar"],
     datasets:[
-      {label:'Leads',data:[54, 34, 3, 57, 36, 28, 38],backgroundColor:'rgba(247,147,30,.2)',borderColor:'#F7931E',borderWidth:1.5,borderRadius:3},
-      {label:'Cotizaciones',data:[2, 5, 0, 9, 10, 5, 21],backgroundColor:'rgba(65,183,79,.2)',borderColor:'#41B74F',borderWidth:1.5,borderRadius:3},
-      {label:'Visitas',data:[1, 1, 0, 3, 3, 0, 2],backgroundColor:'rgba(163,217,165,.2)',borderColor:'#A3D9A5',borderWidth:1.5,borderRadius:3}
+      {label:'Leads',data:[420, 574, 245],backgroundColor:'rgba(247,147,30,.2)',borderColor:'#F7931E',borderWidth:1.5,borderRadius:3},
+      {label:'Cotizaciones',data:[55, 114, 39],backgroundColor:'rgba(65,183,79,.2)',borderColor:'#41B74F',borderWidth:1.5,borderRadius:3},
+      {label:'Visitas',data:[11, 19, 5],backgroundColor:'rgba(163,217,165,.2)',borderColor:'#A3D9A5',borderWidth:1.5,borderRadius:3}
     ]},options:B});
   new Chart(document.getElementById('cConv'),{type:'line',data:{
-    labels:["2026-06", "2026-07", "2026-08", "2026-09", "2026-10", "2026-11", "2026-12"],
+    labels:["Ene", "Feb", "Mar"],
     datasets:[
-      {label:'L-Cot%',data:[3.7, 14.7, 0.0, 15.8, 27.8, 17.9, 55.3],borderColor:'#F7931E',tension:.4,pointRadius:3,borderWidth:2,backgroundColor:'transparent'},
-      {label:'Cot-Vis%',data:[50.0, 20.0, 0, 33.3, 30.0, 0.0, 9.5],borderColor:'#41B74F',tension:.4,pointRadius:3,borderWidth:2,backgroundColor:'transparent'},
-      {label:'Vis-Cie%',data:[0.0, 0.0, 0, 0.0, 0.0, 0, 0.0],borderColor:'#A3D9A5',tension:.4,pointRadius:3,borderWidth:2,backgroundColor:'transparent'}
-    ]},options:{...B,scales:{...B.scales,y:{...B.scales.y,ticks:{...B.scales.y.ticks,callback:v=>v+'%'}}}}});}
+      {label:'L-Cot%',data:[13.1, 19.9, 15.9],borderColor:'#F7931E',tension:.4,pointRadius:3,borderWidth:2,backgroundColor:'transparent'},
+      {label:'Cot-Vis%',data:[20.0, 16.7, 12.8],borderColor:'#41B74F',tension:.4,pointRadius:3,borderWidth:2,backgroundColor:'transparent'},
+      {label:'Vis-Cie%',data:[45.5, 5.3, 20.0],borderColor:'#A3D9A5',tension:.4,pointRadius:3,borderWidth:2,backgroundColor:'transparent'}
+    ]},options:{...B,scales:{...B.scales,y:{...B.scales.y,ticks:{...B.scales.y.ticks,callback:v=>v+'%'}}}}}));}
 function buildE(){window._e=1;
   new Chart(document.getElementById('cEOD'),{type:'line',data:{
     labels:["24/11", "25/08", "26/01", "27/10", "28/07", "29/09", "29/12", "30/06"],
