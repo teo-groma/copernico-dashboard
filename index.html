@@ -151,20 +151,20 @@ h1,h2,h3,.logo-text,.tab,.an,.akl,.ag-per-label,.meta-label,.ch,.log-wl,.log-sl,
 </head>
 <body>
 <script>
-// Stub functions - se sobreescriben cuando Chart.js carga
-window.buildF=window.buildE=window.buildS=function(){};
 function go(id,btn){
   document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('on');});
   document.querySelectorAll('.view').forEach(function(v){v.classList.remove('on');});
   var el=document.getElementById('tab-'+id);
   if(el){el.classList.add('on');}
   if(btn){btn.classList.add('on');}
-  // Defer chart building to after page fully loads
-  setTimeout(function(){
+  // Esperar a que Chart.js este disponible antes de dibujar
+  function tryBuild(){
+    if(typeof Chart==='undefined'){ setTimeout(tryBuild,100); return; }
     if(id==='funnel'&&!window._f)buildF();
     if(id==='equipo'&&!window._e)buildE();
     if(id==='fuentes'&&!window._s)buildS();
-  }, 50);
+  }
+  tryBuild();
 }
 </script>
 <header class="hdr">
@@ -177,7 +177,7 @@ function go(id,btn){
   </div>
   <div style="display:flex;align-items:center;gap:10px">
     <div class="live"><div class="live-d"></div><span class="live-t">LIVE</span></div>
-    <div style="font-size:10px;color:var(--mu)">Act. <b style="color:var(--or)">17 Mar 2026 - 02:09</b></div>
+    <div style="font-size:10px;color:var(--mu)">Act. <b style="color:var(--or)">17 Mar 2026 - 02:13</b></div>
   </div>
 </header>
 
