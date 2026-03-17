@@ -151,15 +151,20 @@ h1,h2,h3,.logo-text,.tab,.an,.akl,.ag-per-label,.meta-label,.ch,.log-wl,.log-sl,
 </head>
 <body>
 <script>
+// Stub functions - se sobreescriben cuando Chart.js carga
+window.buildF=window.buildE=window.buildS=function(){};
 function go(id,btn){
   document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('on');});
   document.querySelectorAll('.view').forEach(function(v){v.classList.remove('on');});
   var el=document.getElementById('tab-'+id);
   if(el){el.classList.add('on');}
   if(btn){btn.classList.add('on');}
-  if(id==='funnel'&&!window._f)buildF();
-  if(id==='equipo'&&!window._e)buildE();
-  if(id==='fuentes'&&!window._s)buildS();
+  // Defer chart building to after page fully loads
+  setTimeout(function(){
+    if(id==='funnel'&&!window._f)buildF();
+    if(id==='equipo'&&!window._e)buildE();
+    if(id==='fuentes'&&!window._s)buildS();
+  }, 50);
 }
 </script>
 <header class="hdr">
@@ -172,7 +177,7 @@ function go(id,btn){
   </div>
   <div style="display:flex;align-items:center;gap:10px">
     <div class="live"><div class="live-d"></div><span class="live-t">LIVE</span></div>
-    <div style="font-size:10px;color:var(--mu)">Act. <b style="color:var(--or)">17 Mar 2026 - 02:02</b></div>
+    <div style="font-size:10px;color:var(--mu)">Act. <b style="color:var(--or)">17 Mar 2026 - 02:09</b></div>
   </div>
 </header>
 
@@ -286,13 +291,36 @@ function go(id,btn){
   <div class="ag-card">
     <div class="ag-head">
       <div class="av" style="background:rgba(65,183,79,.15);color:var(--gr)">AB</div>
-      <div style="flex:1"><div class="an">Alejandro B. (Fundador) <span style="font-size:9px;padding:2px 7px;border-radius:3px;background:rgba(65,183,79,.15);color:var(--gr);margin-left:6px;font-weight:700;font-family:'Raleway',sans-serif">CLOSER</span></div><div class="ar">Actualiza CRM directamente</div></div>
+      <div style="flex:1"><div class="an">Alejandro B. (Fundador) <span style="font-size:9px;padding:2px 7px;border-radius:3px;background:rgba(65,183,79,.15);color:var(--gr);margin-left:6px;font-weight:700;font-family:'Raleway',sans-serif">CLOSER</span></div><div class="ar">Actualiza CRM directamente · sin EOD de setter</div></div>
     </div>
-    <div class="ag-stats">
-      <div class="ak"><div class="akv" style="color:var(--gr)">7</div><div class="akl">Cierres 3m</div></div>
-      <div class="ak"><div class="akv">35</div><div class="akl">Vis. 3m</div></div>
-      <div class="ak"><div class="akv" style="color:var(--gr)">20.0%</div><div class="akl">Vis-Cie %</div></div>
-      <div class="ak"><div class="akv" style="color:var(--mu)">—</div><div class="akl">EOD</div></div>
+    <div class="ag-periods">
+      <div class="ag-per">
+        <div class="ag-per-label">Ultimo mes · Febrero</div>
+        <div class="ag-stats">
+          <div class="ak"><div class="akv" style="color:#E53935">4</div><div class="akl">Cierres EM</div></div>
+          <div class="ak"><div class="akv">21</div><div class="akl">Visitas EM</div></div>
+          <div class="ak"><div class="akv" style="color:#E53935">5.3%</div><div class="akl">Vis-Cie %</div></div>
+          <div class="ak"><div class="akv" style="color:var(--mu)">—</div><div class="akl">EOD</div></div>
+        </div>
+        <div class="meta-row"><div class="meta-label">Meta cierres/mes</div>
+        <div class="meta-track"><div class="meta-fill" style="width:50%;background:#E53935"></div></div>
+        <span style="font-size:10px;font-weight:700;color:#E53935">4/8</span>
+        <div class="meta-target">meta:8</div></div>
+      </div>
+      <div class="ag-per-divider"></div>
+      <div class="ag-per">
+        <div class="ag-per-label cur">Esta semana</div>
+        <div class="ag-stats">
+          <div class="ak"><div class="akv" style="color:#E53935">0</div><div class="akl">Cierres</div></div>
+          <div class="ak"><div class="akv">0</div><div class="akl">Visitas</div></div>
+          <div class="ak"><div class="akv" style="color:#F7931E">20.0%</div><div class="akl">Vis-Cie hist.</div></div>
+          <div class="ak"><div class="akv" style="color:var(--mu)">—</div><div class="akl">EOD</div></div>
+        </div>
+        <div class="meta-row"><div class="meta-label">Meta cierres/sem</div>
+        <div class="meta-track"><div class="meta-fill" style="width:0%;background:#E53935"></div></div>
+        <span style="font-size:10px;font-weight:700;color:#E53935">0/2</span>
+        <div class="meta-target">meta:2</div></div>
+      </div>
     </div>
   </div>
   <div class="card" style="margin-top:10px">
