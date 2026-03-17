@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Copernico - Command Center</title>
 <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;600;700;900&family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
 <style>
 :root{--or:#F7931E;--gr:#41B74F;--gl:#A3D9A5;--bk:#111;--s1:#1A1A1A;--s2:#222;--s3:#2A2A2A;--bd:#333;--tx:#F0F0F0;--mu:#888;--mu2:#555;--re:#E53935;--am:#F59E0B}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -150,6 +150,18 @@ h1,h2,h3,.logo-text,.tab,.an,.akl,.ag-per-label,.meta-label,.ch,.log-wl,.log-sl,
 </style>
 </head>
 <body>
+<script>
+function go(id,btn){
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('on');});
+  document.querySelectorAll('.view').forEach(function(v){v.classList.remove('on');});
+  var el=document.getElementById('tab-'+id);
+  if(el){el.classList.add('on');}
+  if(btn){btn.classList.add('on');}
+  if(id==='funnel'&&!window._f)buildF();
+  if(id==='equipo'&&!window._e)buildE();
+  if(id==='fuentes'&&!window._s)buildS();
+}
+</script>
 <header class="hdr">
   <div class="hdr-l">
     <div style="display:flex;align-items:center;gap:10px">
@@ -160,7 +172,7 @@ h1,h2,h3,.logo-text,.tab,.an,.akl,.ag-per-label,.meta-label,.ch,.log-wl,.log-sl,
   </div>
   <div style="display:flex;align-items:center;gap:10px">
     <div class="live"><div class="live-d"></div><span class="live-t">LIVE</span></div>
-    <div style="font-size:10px;color:var(--mu)">Act. <b style="color:var(--or)">17 Mar 2026 - 01:54</b></div>
+    <div style="font-size:10px;color:var(--mu)">Act. <b style="color:var(--or)">17 Mar 2026 - 02:02</b></div>
   </div>
 </header>
 
@@ -269,7 +281,7 @@ h1,h2,h3,.logo-text,.tab,.an,.akl,.ag-per-label,.meta-label,.ch,.log-wl,.log-sl,
 <!-- EQUIPO -->
 <div id="tab-equipo" class="view">
   <div class="ch" style="margin-top:0;margin-bottom:8px">Setter activa</div>
-  <div class="ag-card"><div class="ag-head"><div class="av" style="background:rgba(247,147,30,.15);color:#F7931E">DA</div><div style="flex:1"><div class="an">Dante A.</div><div class="ar">76 dias activos</div></div></div><div class="ag-periods"><div class="ag-per"><div class="ag-per-label">Ultimo mes</div><div class="ag-stats"><div class="ak"><div class="akv">0</div><div class="akl">Llamadas</div></div><div class="ak"><div class="akv" style="color:#E53935">0.0</div><div class="akl">Llam/dia</div></div><div class="ak"><div class="akv">0</div><div class="akl">Cotiz.</div></div><div class="ak"><div class="akv" style="color:#E53935">0.0%</div><div class="akl">Conv.</div></div></div><div class="meta-row"><div class="meta-label">Llam/dia</div><div class="meta-track"><div class="meta-fill" style="width:0%;background:#E53935"></div></div><span style="font-size:10px;font-weight:700;color:#E53935">0.0/16</span><div class="meta-target">meta:16</div></div><div class="meta-row"><div class="meta-label">Conv llam-cot</div><div class="meta-track"><div class="meta-fill" style="width:0%;background:#E53935"></div></div><span style="font-size:10px;font-weight:700;color:#E53935">0.0/25.0</span><div class="meta-target">meta:25.0%</div></div></div><div class="ag-per-divider"></div><div class="ag-per"><div class="ag-per-label cur">Esta semana</div><div class="ag-stats"><div class="ak"><div class="akv" style="color:#E53935">0</div><div class="akl">Llamadas</div></div><div class="ak"><div class="akv" style="color:#E53935">0</div><div class="akl">Llam/dia</div></div><div class="ak"><div class="akv" style="color:#E53935">0</div><div class="akl">Cotiz.</div></div><div class="ak"><div class="akv" style="color:#E53935">0.0%</div><div class="akl">Conv.</div></div></div><div class="meta-row"><div class="meta-label">Meta llamadas</div><div class="meta-track"><div class="meta-fill" style="width:0%;background:#E53935"></div></div><span style="font-size:10px;font-weight:700;color:#E53935">0/80</span><div class="meta-target">meta:80</div></div><div class="meta-row"><div class="meta-label">Meta cotiz.</div><div class="meta-track"><div class="meta-fill" style="width:0%;background:#E53935"></div></div><span style="font-size:10px;font-weight:700;color:#E53935">0/24</span><div class="meta-target">meta:24</div></div></div></div></div><div class="ag-card"><div class="ag-head"><div class="av" style="background:rgba(247,147,30,.15);color:#F7931E">LH</div><div style="flex:1"><div class="an">Leo Herrera</div><div class="ar">48 dias activos</div></div></div><div class="ag-periods"><div class="ag-per"><div class="ag-per-label">Ultimo mes</div><div class="ag-stats"><div class="ak"><div class="akv">0</div><div class="akl">Llamadas</div></div><div class="ak"><div class="akv" style="color:#E53935">0.0</div><div class="akl">Llam/dia</div></div><div class="ak"><div class="akv">0</div><div class="akl">Cotiz.</div></div><div class="ak"><div class="akv" style="color:#E53935">0.0%</div><div class="akl">Conv.</div></div></div><div class="meta-row"><div class="meta-label">Llam/dia</div><div class="meta-track"><div class="meta-fill" style="width:0%;background:#E53935"></div></div><span style="font-size:10px;font-weight:700;color:#E53935">0.0/16</span><div class="meta-target">meta:16</div></div><div class="meta-row"><div class="meta-label">Conv llam-cot</div><div class="meta-track"><div class="meta-fill" style="width:0%;background:#E53935"></div></div><span style="font-size:10px;font-weight:700;color:#E53935">0.0/25.0</span><div class="meta-target">meta:25.0%</div></div></div><div class="ag-per-divider"></div><div class="ag-per"><div class="ag-per-label cur">Esta semana</div><div class="ag-stats"><div class="ak"><div class="akv" style="color:#E53935">0</div><div class="akl">Llamadas</div></div><div class="ak"><div class="akv" style="color:#E53935">0</div><div class="akl">Llam/dia</div></div><div class="ak"><div class="akv" style="color:#E53935">0</div><div class="akl">Cotiz.</div></div><div class="ak"><div class="akv" style="color:#E53935">0.0%</div><div class="akl">Conv.</div></div></div><div class="meta-row"><div class="meta-label">Meta llamadas</div><div class="meta-track"><div class="meta-fill" style="width:0%;background:#E53935"></div></div><span style="font-size:10px;font-weight:700;color:#E53935">0/80</span><div class="meta-target">meta:80</div></div><div class="meta-row"><div class="meta-label">Meta cotiz.</div><div class="meta-track"><div class="meta-fill" style="width:0%;background:#E53935"></div></div><span style="font-size:10px;font-weight:700;color:#E53935">0/24</span><div class="meta-target">meta:24</div></div></div></div></div><div class="ag-card"><div class="ag-head"><div class="av" style="background:rgba(247,147,30,.15);color:#F7931E">VC</div><div style="flex:1"><div class="an">Val Cardona</div><div class="ar">114 dias activos</div></div></div><div class="ag-periods"><div class="ag-per"><div class="ag-per-label">Ultimo mes</div><div class="ag-stats"><div class="ak"><div class="akv">25</div><div class="akl">Llamadas</div></div><div class="ak"><div class="akv" style="color:#E53935">4.2</div><div class="akl">Llam/dia</div></div><div class="ak"><div class="akv">22</div><div class="akl">Cotiz.</div></div><div class="ak"><div class="akv" style="color:#41B74F">88.0%</div><div class="akl">Conv.</div></div></div><div class="meta-row"><div class="meta-label">Llam/dia</div><div class="meta-track"><div class="meta-fill" style="width:26%;background:#E53935"></div></div><span style="font-size:10px;font-weight:700;color:#E53935">4.2/16</span><div class="meta-target">meta:16</div></div><div class="meta-row"><div class="meta-label">Conv llam-cot</div><div class="meta-track"><div class="meta-fill" style="width:100%;background:#41B74F"></div></div><span style="font-size:10px;font-weight:700;color:#41B74F">88.0/25.0 ok</span><div class="meta-target">meta:25.0%</div></div></div><div class="ag-per-divider"></div><div class="ag-per"><div class="ag-per-label cur">Esta semana</div><div class="ag-stats"><div class="ak"><div class="akv" style="color:#E53935">4</div><div class="akl">Llamadas</div></div><div class="ak"><div class="akv" style="color:#E53935">4.0</div><div class="akl">Llam/dia</div></div><div class="ak"><div class="akv" style="color:#E53935">5</div><div class="akl">Cotiz.</div></div><div class="ak"><div class="akv" style="color:#41B74F">125.0%</div><div class="akl">Conv.</div></div></div><div class="meta-row"><div class="meta-label">Meta llamadas</div><div class="meta-track"><div class="meta-fill" style="width:5%;background:#E53935"></div></div><span style="font-size:10px;font-weight:700;color:#E53935">4/80</span><div class="meta-target">meta:80</div></div><div class="meta-row"><div class="meta-label">Meta cotiz.</div><div class="meta-track"><div class="meta-fill" style="width:20%;background:#E53935"></div></div><span style="font-size:10px;font-weight:700;color:#E53935">5/24</span><div class="meta-target">meta:24</div></div></div></div></div>
+  <div class="ag-card"><div class="ag-head"><div class="av" style="background:rgba(247,147,30,.15);color:#F7931E">VC</div><div style="flex:1"><div class="an">Val Cardona</div><div class="ar">114 dias activos</div></div></div><div class="ag-periods"><div class="ag-per"><div class="ag-per-label">Ultimo mes</div><div class="ag-stats"><div class="ak"><div class="akv">25</div><div class="akl">Llamadas</div></div><div class="ak"><div class="akv" style="color:#E53935">4.2</div><div class="akl">Llam/dia</div></div><div class="ak"><div class="akv">22</div><div class="akl">Cotiz.</div></div><div class="ak"><div class="akv" style="color:#41B74F">88.0%</div><div class="akl">Conv.</div></div></div><div class="meta-row"><div class="meta-label">Llam/dia</div><div class="meta-track"><div class="meta-fill" style="width:26%;background:#E53935"></div></div><span style="font-size:10px;font-weight:700;color:#E53935">4.2/16</span><div class="meta-target">meta:16</div></div><div class="meta-row"><div class="meta-label">Conv llam-cot</div><div class="meta-track"><div class="meta-fill" style="width:100%;background:#41B74F"></div></div><span style="font-size:10px;font-weight:700;color:#41B74F">88.0/25.0 ok</span><div class="meta-target">meta:25.0%</div></div></div><div class="ag-per-divider"></div><div class="ag-per"><div class="ag-per-label cur">Esta semana</div><div class="ag-stats"><div class="ak"><div class="akv" style="color:#E53935">4</div><div class="akl">Llamadas</div></div><div class="ak"><div class="akv" style="color:#E53935">4.0</div><div class="akl">Llam/dia</div></div><div class="ak"><div class="akv" style="color:#E53935">5</div><div class="akl">Cotiz.</div></div><div class="ak"><div class="akv" style="color:#41B74F">125.0%</div><div class="akl">Conv.</div></div></div><div class="meta-row"><div class="meta-label">Meta llamadas</div><div class="meta-track"><div class="meta-fill" style="width:5%;background:#E53935"></div></div><span style="font-size:10px;font-weight:700;color:#E53935">4/80</span><div class="meta-target">meta:80</div></div><div class="meta-row"><div class="meta-label">Meta cotiz.</div><div class="meta-track"><div class="meta-fill" style="width:20%;background:#E53935"></div></div><span style="font-size:10px;font-weight:700;color:#E53935">5/24</span><div class="meta-target">meta:24</div></div></div></div></div>
   <div class="ch" style="margin-top:4px;margin-bottom:8px">Closer</div>
   <div class="ag-card">
     <div class="ag-head">
@@ -347,15 +359,8 @@ h1,h2,h3,.logo-text,.tab,.an,.akl,.ag-per-label,.meta-label,.ch,.log-wl,.log-sl,
   </div>
 </footer>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
-function go(id,btn){
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
-  document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
-  document.getElementById('tab-'+id).classList.add('on');btn.classList.add('on');
-  if(id==='funnel'&&!window._f)buildF();
-  if(id==='equipo'&&!window._e)buildE();
-  if(id==='fuentes'&&!window._s)buildS();
-}
 const tx=()=>'#555';const gc=()=>'rgba(255,255,255,0.04)';
 const B={responsive:true,maintainAspectRatio:false,
   plugins:{legend:{labels:{color:'#777',font:{size:10},boxWidth:10}}},
