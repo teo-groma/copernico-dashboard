@@ -1,0 +1,1424 @@
+#!/usr/bin/env python3
+"""
+Copernico · Generar Dashboard v2
+Uso: python3 generar_dashboard.py
+"""
+import json
+from datetime import datetime
+from io import StringIO
+from pathlib import Path
+import urllib.request
+import pandas as pd
+import numpy as np
+
+SHEET_ID = "1Km-AkX0Gb3tKMT9gAeQoGV_ryiQCHResz5yuqqDGXWI"
+
+def leer_tab(nombre):
+    url = ("https://docs.google.com/spreadsheets/d/" + SHEET_ID
+           + "/gviz/tq?tqx=out:csv&sheet=" + nombre.replace(" ", "%20"))
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=20) as r:
+            content = r.read().decode("utf-8", errors="replace")
+        df = pd.read_csv(StringIO(content))
+        print(f"  OK {nombre}: {len(df)} filas")
+        return df
+    except Exception as e:
+        print(f"  ERROR {nombre}: {e}")
+        return pd.DataFrame()
+
+# ─── LEER METAS DEL SHEET ─────────────────────────────────────────────────────
+def leer_metas(df_raw):
+    defaults = {
+        "llamadas": 60, "cotizaciones": 15, "visitas": 3, "cierres": 1,
+        "conv_lc": 25.0, "conv_cv": 25.0, "conv_vc": 33.0,
+        "llamadas_dia": 12,
+    }
+    if df_raw.empty:
+        return defaults
+    # La pestaña Metas tiene: col B = Métrica, col C = Meta actual
+    try:
+        metas = defaults.copy()
+        for _, r in df_raw.iterrows():
+            metrica = str(r.iloc[1] if len(r) > 1 else "").strip().lower()
+            valor_raw = r.iloc[2] if len(r) > 2 else None
+            try:
+                valor = float(str(valor_raw).replace("%","").replace(",",".").strip())
+            except:
+                continue
+            if not metrica or metrica == "nan" or valor == 0:
+                continue
+            if "llamadas" in metrica and "setter" not in metrica and "día" not in metrica and "dia" not in metrica:
+                metas["llamadas"] = int(valor)
+            elif "cotizaciones" in metrica or "cotiz" in metrica:
+                metas["cotizaciones"] = int(valor)
+            elif "visitas" in metrica:
+                metas["visitas"] = int(valor)
+            elif "cierres" in metrica:
+                metas["cierres"] = int(valor)
+            elif "lead" in metrica and "cotiz" in metrica:
+                metas["conv_lc"] = float(valor)
+            elif "cotiz" in metrica and "vis" in metrica:
+                metas["conv_cv"] = float(valor)
+            elif "vis" in metrica and ("cier" in metrica or "close" in metrica):
+                metas["conv_vc"] = float(valor)
+            elif ("llamadas" in metrica and ("setter" in metrica or "día" in metrica or "dia" in metrica)):
+                metas["llamadas_dia"] = int(valor)
+        print(f"  Metas leídas: {metas}")
+        return metas
+    except Exception as e:
+        print(f"  Error leyendo metas: {e}")
+        return defaults
+
+# ─── LEER INFO GENERAL 2026 ───────────────────────────────────────────────────
+def leer_info_general(df_raw):
+    """Lee Info General 2026 — datos ya calculados en el Sheet."""
+    if df_raw.empty:
+        return []
+    
+    def n(v):
+        try:
+            f = float(str(v).replace(",",".").replace("%","").strip())
+            return 0.0 if np.isnan(f) else f
+        except:
+            return 0.0
+
+    MESES = ["enero","febrero","marzo","abril","mayo","junio",
+             "julio","agosto","septiembre","octubre","noviembre","diciembre"]
+
+    # La estructura es: fila 0 = "eo", fila 1 = grupos, fila 2 = headers, fila 3+ = datos
+    # Pero al leer via CSV los headers merged quedan vacios
+    # Estrategia: buscar filas donde col 1 sea un mes
+    monthly = []
+    for _, row in df_raw.iterrows():
+        vals = [str(v).strip() if v is not None else "" for v in row.values]
+        # Buscar el nombre del mes en cualquiera de las primeras 3 columnas
+        mes_raw = ""
+        for v in vals[:3]:
+            if any(m in v.lower() for m in MESES) and "-" not in v:
+                mes_raw = v
+                break
+        if not mes_raw:
+            continue
+
+        # Extraer numeros de las columnas de datos (posiciones fijas del Sheet)
+        # Col 0/1/2 = identificacion, Col 3 = Leads, Col 4 = LM Cot, Col 5 = LM Vis, Col 6 = LM Cie
+        # Col 7 = EM Cot, Col 8 = EM Vis, Col 9 = EM Cie
+        try:
+            leads  = n(vals[2]) if len(vals)>2 else 0
+            lm_cot = n(vals[3]) if len(vals)>3 else 0
+            lm_vis = n(vals[4]) if len(vals)>4 else 0
+            lm_cie = n(vals[5]) if len(vals)>5 else 0
+            em_cot = n(vals[6]) if len(vals)>6 else 0
+            em_vis = n(vals[7]) if len(vals)>7 else 0
+            em_cie = n(vals[8]) if len(vals)>8 else 0
+        except:
+            continue
+
+        if leads == 0 and lm_cot == 0:
+            continue
+
+        conv_lc = round(lm_cot/leads*100, 1) if leads > 0 else 0
+        conv_cv = round(lm_vis/lm_cot*100, 1) if lm_cot > 0 else 0
+        conv_vc = round(lm_cie/lm_vis*100, 1) if lm_vis > 0 else 0
+
+        monthly.append({
+            "mes": mes_raw, "leads": int(leads),
+            "cot": int(lm_cot), "vis": int(lm_vis), "cie": int(lm_cie),
+            "em_cot": int(em_cot), "em_vis": int(em_vis), "em_cie": int(em_cie),
+            "conv_lc": conv_lc, "conv_cv": conv_cv, "conv_vc": conv_vc,
+        })
+
+    print(f"  Info General parsed: {len(monthly)} meses → {[m['mes'] for m in monthly]}")
+    return monthly
+
+# ─── PROCESAR GHL (solo semana actual + datos rápidos) ────────────────────────
+def procesar_ghl_semana(df_raw):
+    """Del GHL solo extraemos la semana actual/anterior para los semáforos."""
+    if df_raw.empty:
+        return {"sem_cur":{}, "sem_ant":{}, "total":0, "ad_quality":{}}
+    df = df_raw.copy()
+    df.columns = [c.strip() for c in df.columns]
+
+    col_tel   = next((c for c in df.columns if "tel" in c.lower()), None)
+    col_stage = next((c for c in df.columns if "pipeline" in c.lower() or "estado" in c.lower()), None)
+    col_fecha = next((c for c in df.columns if c.strip().lower() == "fecha"), None)
+    col_cot   = next((c for c in df.columns if "cotiz" in c.lower() and "enviada" in c.lower()), None)
+    col_vis   = next((c for c in df.columns if "visita" in c.lower() and "agendada" in c.lower()), None)
+    col_content=next((c for c in df.columns if c.lower() == "content"), None)
+
+    STAGE_MAP = {
+        "Seguimiento":"\U0001f501 Seguimiento","Cotizaci\u00f3n Enviada":"Cotizacion",
+        "\U0001f4e4 Cotizaci\u00f3n Enviada":"Cotizacion",
+        "Visita Tecnica":"Visita","\U0001f9f0 Visita Tecnica":"Visita",
+        "\U0001f3c6 Ganado":"Ganado","Ganado":"Ganado",
+    }
+    STAGE_ORD = {"Ganado":5,"Visita":4,"Cotizacion":3,"Seguimiento":2}
+
+    if col_stage:
+        df["_stage"] = df[col_stage].map(STAGE_MAP).fillna(df[col_stage])
+    else:
+        df["_stage"] = "Seguimiento"
+    df["_ord"] = df["_stage"].map(STAGE_ORD).fillna(0)
+
+    if col_tel:
+        df = df.sort_values("_ord", ascending=False).drop_duplicates(col_tel, keep="first")
+
+    SI = ["SI","YES","1","TRUE"]
+    df["_cot"] = df[col_cot].astype(str).str.upper().str.strip().isin(SI) if col_cot else (df["_ord"]>=3)
+    df["_vis"] = df[col_vis].astype(str).str.upper().str.strip().isin(SI) if col_vis else (df["_ord"]>=4)
+    df["_cie"] = df["_stage"] == "Ganado"
+
+    sem_cur = {"leads":0,"cot":0,"vis":0,"cie":0}
+    sem_ant = {"leads":0,"cot":0,"vis":0,"cie":0}
+    sem_ant2= {"leads":0,"cot":0,"vis":0,"cie":0}
+
+    if col_fecha:
+        df["_fecha"] = pd.to_datetime(df[col_fecha], errors="coerce", dayfirst=True)
+        df["_sem"]   = df["_fecha"].dt.to_period("W")
+        df_with_date = df[df["_sem"].notna()]
+        if not df_with_date.empty:
+            sem_max  = df_with_date["_sem"].max()
+            sem_ant1 = sem_max - 1
+            sem_ant2p= sem_max - 2
+            c  = df_with_date[df_with_date["_sem"] == sem_max]
+            a  = df_with_date[df_with_date["_sem"] == sem_ant1]
+            a2 = df_with_date[df_with_date["_sem"] == sem_ant2p]
+            sem_cur  = {"leads":len(c),"cot":int(c["_cot"].sum()),"vis":int(c["_vis"].sum()),"cie":int(c["_cie"].sum())}
+            sem_ant  = {"leads":len(a),"cot":int(a["_cot"].sum()),"vis":int(a["_vis"].sum()),"cie":int(a["_cie"].sum())}
+            sem_ant2 = {"leads":len(a2),"cot":int(a2["_cot"].sum()),"vis":int(a2["_vis"].sum()),"cie":int(a2["_cie"].sum())}
+
+    # Calidad por ad
+    ad_quality = {}
+    if col_content:
+        for ad, g in df.groupby(col_content):
+            if pd.isna(ad) or str(ad).strip() in ["","nan"]: continue
+            n2=len(g); lc=int(g["_cot"].sum()); lv=int(g["_vis"].sum()); cc=int(g["_cie"].sum())
+            ad_quality[str(ad)] = {
+                "leads":n2,"cot":lc,"vis":lv,"cie":cc,
+                "conv_lc":round(lc/n2*100,1) if n2>0 else 0,
+                "conv_cv":round(lv/lc*100,1) if lc>0 else 0,
+                "conv_vc":round(cc/lv*100,1) if lv>0 else 0,
+            }
+
+    return {"sem_cur":sem_cur,"sem_ant":sem_ant,"sem_ant2":sem_ant2,
+            "total":len(df),"ad_quality":ad_quality}
+
+# ─── PROCESAR EOD ─────────────────────────────────────────────────────────────
+def procesar_eod(df_raw, metas):
+    if df_raw.empty:
+        return {"agentes":{},"semanas":[],"sem_cur":{},"sem_ant":{}}
+    df = df_raw.copy()
+    df.columns = [c.strip() for c in df.columns]
+
+    col_email = next((c for c in df.columns if "email" in c.lower()), None)
+    col_ts    = next((c for c in df.columns if "timestamp" in c.lower()), None)
+    col_calls = next((c for c in df.columns if any(k in c.lower() for k in
+                      ["llamad","call","leads nuevos","contactado"])), None)
+    col_cot   = next((c for c in df.columns if "cotiz" in c.lower()), None)
+    col_vis   = next((c for c in df.columns if "visita" in c.lower()), None)
+
+    AGENTS = {
+        "valvalcardona@gmail.com":     "Val Cardona",
+        "dantealigieri2013@gmail.com": "Dante A.",
+        "leohercar17@gmail.com":       "Leo Herrera",
+        "mateovargaspat@gmail.com":    "Mateo Vargas",
+    }
+
+    if col_email: df["_ag"] = df[col_email].map(AGENTS).fillna("Otro")
+    if col_ts:
+        df["_ts"]  = pd.to_datetime(df[col_ts], errors="coerce")
+        df["_mes"] = df["_ts"].dt.to_period("M")
+        df["_sem"] = df["_ts"].dt.to_period("W")
+
+    def ss(g, col):
+        if not col: return 0
+        return int(pd.to_numeric(g[col], errors="coerce").fillna(0).sum())
+
+    agentes = {}
+    if col_email and col_ts:
+        known = list(AGENTS.values())
+        sub = df[df["_ag"].isin(known)]
+        if not sub.empty:
+            mes_max = sub["_mes"].max()
+            sem_max = sub["_sem"].max()
+            sem_ant = sem_max - 1 if sem_max else None
+
+            for ag, g in sub.groupby("_ag"):
+                dias_total = g["_ts"].dt.date.nunique()
+                ll_total   = ss(g, col_calls)
+                cot_total  = ss(g, col_cot)
+
+                g_mes = g[g["_mes"] == mes_max]
+                dias_mes = g_mes["_ts"].dt.date.nunique()
+                ll_mes   = ss(g_mes, col_calls)
+                cot_mes  = ss(g_mes, col_cot)
+                vis_mes  = ss(g_mes, col_vis)
+
+                g_sem = g[g["_sem"] == sem_max]
+                dias_sem = g_sem["_ts"].dt.date.nunique()
+                ll_sem   = ss(g_sem, col_calls)
+                cot_sem  = ss(g_sem, col_cot)
+                vis_sem  = ss(g_sem, col_vis)
+
+                g_ant = g[g["_sem"] == sem_ant] if sem_ant else g.iloc[0:0]
+                ll_ant = ss(g_ant, col_calls)
+
+                agentes[ag] = {
+                    "dias": int(dias_total),
+                    "llamadas": ll_total, "cotizaciones": cot_total,
+                    "llam_dia": round(ll_total/max(dias_total,1),1),
+                    "conv": round(cot_total/max(ll_total,1)*100,1),
+                    "mes": {
+                        "dias":int(dias_mes),"llamadas":ll_mes,
+                        "cotizaciones":cot_mes,"visitas":vis_mes,
+                        "llam_dia":round(ll_mes/max(dias_mes,1),1),
+                        "conv":round(cot_mes/max(ll_mes,1)*100,1),
+                    },
+                    "sem": {
+                        "dias":int(dias_sem),"llamadas":ll_sem,
+                        "cotizaciones":cot_sem,"visitas":vis_sem,
+                        "llam_dia":round(ll_sem/max(dias_sem,1),1) if dias_sem>0 else 0,
+                        "conv":round(cot_sem/max(ll_sem,1)*100,1),
+                    },
+                    "sem_ant_ll": ll_ant,
+                }
+
+    semanas = []
+    if col_ts and col_calls:
+        known = list(AGENTS.values()) if col_email else []
+        sub2 = df[df["_ag"].isin(known)] if col_email and known else df
+        for sem, g in sub2.groupby("_sem"):
+            semanas.append({
+                "sem": str(sem.start_time.strftime("%d/%m")),
+                "llamadas": ss(g, col_calls),
+                "cots": ss(g, col_cot),
+            })
+        semanas = sorted(semanas, key=lambda x: x["sem"])[-8:]
+
+    sem_cur_eod = {"llamadas":0,"cots":0,"vis":0}
+    sem_ant_eod = {"llamadas":0,"cots":0,"vis":0}
+    if col_ts:
+        known = list(AGENTS.values()) if col_email else []
+        sub3 = df[df["_ag"].isin(known)] if col_email and known else df
+        if not sub3.empty and "_sem" in sub3.columns:
+            sem_max2 = sub3["_sem"].max()
+            sem_ant2 = sem_max2 - 1
+            c  = sub3[sub3["_sem"] == sem_max2]
+            a  = sub3[sub3["_sem"] == sem_ant2]
+            sem_cur_eod = {"llamadas":ss(c,col_calls),"cots":ss(c,col_cot),"vis":ss(c,col_vis)}
+            sem_ant_eod = {"llamadas":ss(a,col_calls),"cots":ss(a,col_cot),"vis":ss(a,col_vis)}
+
+    return {"agentes":agentes,"semanas":semanas,"sem_cur":sem_cur_eod,"sem_ant":sem_ant_eod}
+
+# ─── PROCESAR ADS ─────────────────────────────────────────────────────────────
+def procesar_ads(df_raw, ad_quality, gbl_cvc=20.0):
+    if df_raw.empty: return []
+    df = df_raw.copy()
+    df.columns = [c.strip() for c in df.columns]
+    df = df[df.iloc[:,0].notna()].copy()
+    df = df[~df.iloc[:,0].astype(str).str.strip().isin(["Semana",""])].copy()
+
+    col_camp  = next((c for c in df.columns if "campa" in c.lower()), None)
+    col_ad    = next((c for c in df.columns if c.strip().lower() == "ad"), None)
+    col_leads = next((c for c in df.columns if "leads" in c.lower()), None)
+    col_gasto = next((c for c in df.columns if "gasto" in c.lower()), None)
+
+    def nv(v):
+        try:
+            import math
+            f = float(str(v).replace(",","").replace("—","0").strip() or 0)
+            return 0.0 if math.isnan(f) else f
+        except: return 0.0
+
+    from collections import defaultdict
+    agg = defaultdict(lambda: {"leads":0,"gasto":0,"camp":""})
+    for _, r in df.iterrows():
+        ad = str(r[col_ad]).strip() if col_ad else ""
+        if not ad or ad == "nan": continue
+        agg[ad]["leads"]  += int(nv(r[col_leads])) if col_leads else 0
+        agg[ad]["gasto"]  += int(nv(r[col_gasto])) if col_gasto else 0
+        agg[ad]["camp"]    = str(r[col_camp]).strip() if col_camp else ""
+
+    result = []
+    for ad, v in agg.items():
+        cpl = int(v["gasto"]/v["leads"]) if v["leads"] > 0 else 0
+        qual = {}
+        for k, q in ad_quality.items():
+            if ad[:6].lower() in k.lower() or k[:6].lower() in ad.lower():
+                qual = q; break
+        conv_vc  = qual.get("conv_vc", 0)
+        # Si no hay match por content, usar tasa global de cierre como aproximacion
+        tasa_cierre = conv_vc if conv_vc > 0 else gbl_cvc
+        cpl_real = int(cpl/(tasa_cierre/100)) if tasa_cierre > 0 else 0
+        is_wha   = "wha" in v["camp"].lower() or "c5" in v["camp"].lower()
+        result.append({
+            "ad":ad,"camp":v["camp"],"is_wha":is_wha,
+            "leads":v["leads"],"gasto":v["gasto"],"cpl":cpl,
+            "conv_lc":qual.get("conv_lc",0),"conv_cv":qual.get("conv_cv",0),
+            "conv_vc":conv_vc,"cpl_real":cpl_real,
+        })
+    return sorted(result, key=lambda x: x["gasto"], reverse=True)
+
+# ─── PROCESAR LOG ─────────────────────────────────────────────────────────────
+def procesar_log(df_raw):
+    if df_raw.empty: return []
+    df = df_raw.copy()
+    df.columns = [c.strip() for c in df.columns]
+    logs = []
+    for _, r in df.iterrows():
+        sem = str(r.iloc[0]).strip() if len(r)>0 else ""
+        if not sem or sem=="nan" or "semana" in sem.lower() or "identificaci" in sem.lower(): continue
+        per = str(r.iloc[1]).strip() if len(r)>1 else ""
+        def g(i): return str(r.iloc[i]).strip() if len(r)>i else ""
+        def clean(v): return "" if v in ["nan","None",""] else v
+        logs.append({
+            "sem":sem,"per":clean(per),
+            "ll":clean(g(2)),"cot":clean(g(3)),"vis":clean(g(4)),"cie":clean(g(5)),
+            "dec":clean(g(11)),"eje":clean(g(12)),"con":clean(g(13)),"prx":clean(g(14)),
+        })
+    return logs[:10]
+
+# ─── GENERAR HTML ─────────────────────────────────────────────────────────────
+def exec_summary(status, resumen, insights, criticos, acciones, hipotesis,
+                 bottleneck="", opportunity="", focus=""):
+    """Generate executive summary HTML block for a tab."""
+    STATUS = {
+        "healthy": ("#41B74F", "🟢", "HEALTHY", "rgba(65,183,79,.12)"),
+        "watch":   ("#F59E0B", "🟡", "WATCH",   "rgba(245,158,11,.12)"),
+        "critical":("#E53935", "🔴", "CRITICAL","rgba(229,57,53,.12)"),
+    }
+    color, emoji, label, bg = STATUS.get(status, STATUS["watch"])
+
+    def items(lst, cls):
+        return "".join(f'<div class="es-item {cls}">· {x}</div>' for x in lst[:3])
+
+    badges = ""
+    if bottleneck:
+        badges += f'<span class="es-badge es-bot">⚠ Cuello: {bottleneck}</span>'
+    if opportunity:
+        badges += f'<span class="es-badge es-opp">↑ Oportunidad: {opportunity}</span>'
+    if focus:
+        badges += f'<span class="es-badge es-foc">🎯 Focus: {focus}</span>'
+
+    hip_html = "".join(f'<div class="es-hip" style="margin-bottom:5px">💡 {h}</div>' for h in hipotesis[:2])
+
+    return (
+        f'<div class="exec-sum" style="border-left-color:{color}">'
+        f'<div class="es-top">'
+        f'<div class="es-status" style="background:{bg}">'
+        f'<span style="font-size:15px">{emoji}</span>'
+        f'<span class="es-status-label" style="color:{color}">{label}</span>'
+        f'</div>'
+        f'<div class="es-badges">{badges}</div>'
+        f'</div>'
+        f'<div class="es-grid">'
+        f'<div class="es-col"><div class="es-ttl">Resumen del sistema</div><div class="es-text">{resumen}</div></div>'
+        f'<div class="es-col"><div class="es-ttl">Insights Clave</div>{items(insights,"es-item-i")}</div>'
+        f'<div class="es-col"><div class="es-ttl">Puntos Criticos</div>{items(criticos,"es-item-c")}</div>'
+        f'<div class="es-col"><div class="es-ttl">Acciones Esta Semana</div>{items(acciones,"es-item-a")}</div>'
+        f'<div class="es-col"><div class="es-ttl">Hipotesis Estrategica</div>{hip_html}</div>'
+        f'</div></div>'
+    )
+
+
+def generar_html(monthly, ghl, eod, ads, logs, metas):
+    ahora   = datetime.now().strftime("%d %b %Y - %H:%M")
+    sem_c   = ghl.get("sem_cur",{})
+    sem_a   = ghl.get("sem_ant",{})
+    sem_a2  = ghl.get("sem_ant2",{})
+    esem_c  = eod.get("sem_cur",{})
+    esem_a  = eod.get("sem_ant",{})
+    agentes = eod.get("agentes",{})
+    semanas = eod.get("semanas",[])
+
+    # Ultimos 3 meses desde Info General
+    u3_months = monthly[-3:] if len(monthly) >= 3 else monthly
+    u3_leads = sum(m["leads"] for m in u3_months)
+    u3_cot   = sum(m["cot"]   for m in u3_months)
+    u3_vis   = sum(m["vis"]   for m in u3_months)
+    u3_cie   = sum(m["cie"]   for m in u3_months)
+    u3_clc   = round(u3_cot/u3_leads*100,1) if u3_leads>0 else 0
+    u3_ccv   = round(u3_vis/u3_cot*100,1)   if u3_cot>0  else 0
+    u3_cvc   = round(u3_cie/u3_vis*100,1)   if u3_vis>0  else 0
+
+    # KPIs esta semana (EOD es más fiable que GHL para semana actual)
+    ll  = esem_c.get("llamadas",0)
+    cot = esem_c.get("cots",0)
+    vis = esem_c.get("vis",0)
+    cie = sem_c.get("cie",0)
+
+    # Semana anterior EOD
+    ll_a  = esem_a.get("llamadas",0)
+    cot_a = esem_a.get("cots",0)
+    vis_a = esem_a.get("vis",0)
+    cie_a = sem_a.get("cie",0)
+
+    # Semana anterior-anterior GHL
+    ll_a2  = sem_a2.get("leads",0)
+    cot_a2 = sem_a2.get("cot",0)
+    vis_a2 = sem_a2.get("vis",0)
+    cie_a2 = sem_a2.get("cie",0)
+
+    def sc(a, meta):
+        p = a/meta if meta>0 else 0
+        if p>=0.85: return "#41B74F"
+        if p>=0.60: return "#F7931E"
+        return "#E53935"
+
+    def sc_class(a, meta):
+        p = a/meta if meta>0 else 0
+        if p>=0.85: return "sg"
+        if p>=0.60: return "so"
+        return "sr"
+
+    def pbar(a, meta, c=None):
+        pct = min(int(a/meta*100),100) if meta>0 else 0
+        color = c or sc(a,meta)
+        return (f'<div style="background:#2A2A2A;border-radius:3px;height:5px;overflow:hidden;margin:4px 0 2px">'
+                f'<div style="height:100%;border-radius:3px;width:{pct}%;background:{color}"></div></div>')
+
+    # Datos graficas
+    mes_labels  = json.dumps([m["mes"][:3] for m in monthly])
+    mes_leads_j = json.dumps([m["leads"] for m in monthly])
+    mes_cot_j   = json.dumps([m["cot"]   for m in monthly])
+    mes_vis_j   = json.dumps([m["vis"]   for m in monthly])
+    mes_clc_j   = json.dumps([m["conv_lc"] for m in monthly])
+    mes_ccv_j   = json.dumps([m["conv_cv"] for m in monthly])
+    mes_cvc_j   = json.dumps([m["conv_vc"] for m in monthly])
+    sem_labels  = json.dumps([s["sem"] for s in semanas])
+    sem_ll_j    = json.dumps([s["llamadas"] for s in semanas])
+    sem_cot_j2  = json.dumps([s["cots"] for s in semanas])
+
+    form_ads = [a for a in ads if not a.get("is_wha") and a["gasto"]>0]
+    ads_top  = form_ads[:6]
+    ads_names_j   = json.dumps([a["ad"][:18] for a in ads_top])
+    ads_leads_j   = json.dumps([a["leads"] for a in ads_top])
+    ads_cpl_real_j= json.dumps([a["cpl_real"] for a in ads_top])
+
+    # Agentes HTML
+    def ag_block(ag, data):
+        init = "".join(p[0].upper() for p in ag.split()[:2])
+        mes  = data.get("mes",{})
+        sem  = data.get("sem",{})
+
+        def mk_bar(actual, meta):
+            pct = min(int(actual/meta*100),100) if meta>0 else 0
+            c   = sc(actual,meta)
+            return (f'<div class="meta-track"><div class="meta-fill" style="width:{pct}%;background:{c}"></div></div>')
+
+        def mk_val(a, m):
+            c = sc(a,m)
+            ok = " ok" if a>=m else ""
+            return f'<span style="font-size:10px;font-weight:700;color:{c}">{a}/{m}{ok}</span>'
+
+        return (
+            f'<div class="ag-card">'
+            f'<div class="ag-head">'
+            f'<div class="av" style="background:rgba(247,147,30,.15);color:#F7931E">{init}</div>'
+            f'<div style="flex:1"><div class="an">{ag}</div>'
+            f'<div class="ar">{data.get("dias","")} dias activos</div></div></div>'
+            f'<div class="ag-periods">'
+            f'<div class="ag-per"><div class="ag-per-label">Ultimo mes</div>'
+            f'<div class="ag-stats">'
+            f'<div class="ak"><div class="akv">{mes.get("llamadas",0)}</div><div class="akl">Llamadas</div></div>'
+            f'<div class="ak"><div class="akv" style="color:{sc(mes.get("llam_dia",0),metas["llamadas_dia"])}">{mes.get("llam_dia",0)}</div><div class="akl">Llam/dia</div></div>'
+            f'<div class="ak"><div class="akv">{mes.get("cotizaciones",0)}</div><div class="akl">Cotiz.</div></div>'
+            f'<div class="ak"><div class="akv" style="color:{sc(mes.get("conv",0),metas["conv_lc"])}">{mes.get("conv",0)}%</div><div class="akl">Conv.</div></div>'
+            f'</div>'
+            f'<div class="meta-row"><div class="meta-label">Llam/dia</div>'
+            f'{mk_bar(mes.get("llam_dia",0),metas["llamadas_dia"])}'
+            f'{mk_val(mes.get("llam_dia",0),metas["llamadas_dia"])}'
+            f'<div class="meta-target">meta:{metas["llamadas_dia"]}</div></div>'
+            f'<div class="meta-row"><div class="meta-label">Conv llam-cot</div>'
+            f'{mk_bar(mes.get("conv",0),metas["conv_lc"])}'
+            f'{mk_val(mes.get("conv",0),metas["conv_lc"])}'
+            f'<div class="meta-target">meta:{metas["conv_lc"]}%</div></div>'
+            f'</div>'
+            f'<div class="ag-per-divider"></div>'
+            f'<div class="ag-per"><div class="ag-per-label cur">Esta semana</div>'
+            f'<div class="ag-stats">'
+            f'<div class="ak"><div class="akv" style="color:{sc(sem.get("llamadas",0),metas["llamadas"])}">{sem.get("llamadas",0)}</div><div class="akl">Llamadas</div></div>'
+            f'<div class="ak"><div class="akv" style="color:{sc(sem.get("llam_dia",0),metas["llamadas_dia"])}">{sem.get("llam_dia",0)}</div><div class="akl">Llam/dia</div></div>'
+            f'<div class="ak"><div class="akv" style="color:{sc(sem.get("cotizaciones",0),metas["cotizaciones"])}">{sem.get("cotizaciones",0)}</div><div class="akl">Cotiz.</div></div>'
+            f'<div class="ak"><div class="akv" style="color:{sc(sem.get("conv",0),metas["conv_lc"])}">{sem.get("conv",0)}%</div><div class="akl">Conv.</div></div>'
+            f'</div>'
+            f'<div class="meta-row"><div class="meta-label">Meta llamadas</div>'
+            f'{mk_bar(sem.get("llamadas",0),metas["llamadas"])}'
+            f'{mk_val(sem.get("llamadas",0),metas["llamadas"])}'
+            f'<div class="meta-target">meta:{metas["llamadas"]}</div></div>'
+            f'<div class="meta-row"><div class="meta-label">Meta cotiz.</div>'
+            f'{mk_bar(sem.get("cotizaciones",0),metas["cotizaciones"])}'
+            f'{mk_val(sem.get("cotizaciones",0),metas["cotizaciones"])}'
+            f'<div class="meta-target">meta:{metas["cotizaciones"]}</div></div>'
+            f'</div></div></div>'
+        )
+
+    ag_html = "".join(ag_block(ag,data) for ag,data in agentes.items() if "Val" in ag)
+    if not ag_html:
+        ag_html = '<div style="color:#888;text-align:center;padding:20px;font-size:12px">Sin datos EOD</div>'
+
+    # Ads quality table
+    def qual_bar(pct, max_p=35):
+        w = min(int(pct/max_p*100),100)
+        c = "#41B74F" if pct>=25 else ("#F7931E" if pct>=12 else "#E53935")
+        return (f'<div style="display:flex;align-items:center;gap:5px">'
+                f'<div style="width:36px;background:#2A2A2A;border-radius:2px;height:5px;overflow:hidden;flex-shrink:0">'
+                f'<div style="height:100%;border-radius:2px;width:{w}%;background:{c}"></div></div>'
+                f'<span style="color:{c};font-weight:700;font-size:11px">{pct}%</span></div>')
+
+    ads_rows = ""
+    for a in form_ads[:8]:
+        cpl_c = "#41B74F" if a["cpl"]<8000 else ("#F7931E" if a["cpl"]<15000 else "#E53935")
+        cpl_rc= "#41B74F" if a["cpl_real"]<50000 else ("#F7931E" if a["cpl_real"]<150000 else "#E53935")
+        veredicto = "Sin datos" if a["conv_vc"]==0 else ("Mejor ROI" if a["cpl_real"]<50000 else ("Monitorear" if a["cpl_real"]<150000 else "Revisar"))
+        tc = "#2A2A2A" if a["conv_vc"]==0 else ("rgba(65,183,79,.2)" if a["cpl_real"]<50000 else ("rgba(247,147,30,.15)" if a["cpl_real"]<150000 else "rgba(229,57,53,.15)"))
+        tf = "#888" if a["conv_vc"]==0 else ("#41B74F" if a["cpl_real"]<50000 else ("#F7931E" if a["cpl_real"]<150000 else "#E53935"))
+        ads_rows += (
+            f"<tr>"
+            f"<td style='text-align:left;font-weight:600;font-size:11px'>{a['ad'][:26]}</td>"
+            f"<td>{a['leads'] or '-'}</td>"
+            f"<td style='color:{cpl_c};font-weight:700'>${a['cpl']:,}</td>"
+            f"<td>{qual_bar(a['conv_lc']) if a['conv_lc'] else '<span style=color:#555>—</span>'}</td>"
+            f"<td>{qual_bar(a['conv_cv']) if a['conv_cv'] else '<span style=color:#555>—</span>'}</td>"
+            f"<td>{qual_bar(a['conv_vc'],25) if a['conv_vc'] else '<span style=color:#555>—</span>'}</td>"
+            f"<td style='color:{cpl_rc};font-weight:700'>{'$'+str(a['cpl_real']) if a['cpl_real'] else '—'}</td>"
+            f"<td><span style='font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;background:{tc};color:{tf}'>{veredicto}</span></td>"
+            f"</tr>"
+        )
+
+    # Log HTML
+    log_html = ""
+    for i, lg in enumerate(logs):
+        is_cur = (i==0)
+        cur_cls = "log-e log-cur" if is_cur else "log-e"
+        chips = ""
+        for val, meta, lbl in [(lg.get("ll",""),metas["llamadas"],"Llamadas"),
+                                (lg.get("cot",""),metas["cotizaciones"],"Cot."),
+                                (lg.get("vis",""),metas["visitas"],"Vis."),
+                                (lg.get("cie",""),metas["cierres"],"Cierres")]:
+            if not val or val=="0": continue
+            try:
+                num = float(val)
+                cls = "lcg" if num>=meta*0.85 else ("lca" if num>=meta*0.6 else "lcr")
+            except: cls = "lcn"
+            chips += f'<span class="lc {cls}">{lbl} {val}</span>'
+
+        dec_b = (f'<div class="log-sl">Decision</div>'
+                 + (f'<div class="log-empty">Pendiente — escr\u00edbela en el Sheet Log_Semanal</div>'
+                    if not lg.get("dec") else
+                    f'<div class="log-box log-dec">{lg["dec"]}</div>'))
+        eje_b = (f'<div class="log-sl" style="margin-top:6px">Se ejecuto?</div><div class="log-box log-eje">{lg["eje"]}</div>'
+                 if lg.get("eje") else "")
+        con_b = (f'<div class="log-sl" style="margin-top:6px">Consecuencia en numeros</div><div class="log-box log-con">{lg["con"]}</div>'
+                 if lg.get("con") else
+                 (f'<div class="log-sl" style="margin-top:6px">Consecuencia</div><div class="log-empty">Aparece automaticamente la proxima semana.</div>'
+                  if is_cur else ""))
+
+        log_html += (
+            f'<div class="{cur_cls}">'
+            f'<div class="log-wl">{lg["sem"]}{"  HOY" if is_cur else ""}{"  " + lg["per"] if lg.get("per") else ""}</div>'
+            f'<div class="log-chips">{chips}</div>'
+            f'{dec_b}{eje_b}{con_b}</div>'
+        )
+    if not log_html:
+        log_html = '<div style="color:#888;text-align:center;padding:20px">Sin datos en Log_Semanal todavia</div>'
+
+    # Mes actual (ultimo de la lista)
+    mes_act = monthly[-1] if monthly else {}
+    mes_ant = monthly[-2] if len(monthly)>=2 else {}
+
+    vc_rate = max(u3_cvc/100, 0.01)
+    cv_rate = max(u3_ccv/100, 0.01)
+
+    u3_label = " + ".join(m["mes"] for m in u3_months)
+    monthly_rows = "".join(
+        f"<tr><td>{m['mes']}</td><td>{m['leads']:,}</td>"
+        f"<td>{m['cot']}</td><td>{m['vis']}</td><td>{m['cie']}</td>"
+        f"<td style='color:{sc(m['conv_lc'],metas['conv_lc'])};font-weight:700'>{m['conv_lc']}%</td>"
+        f"<td style='color:{sc(m['conv_cv'],metas['conv_cv'])};font-weight:700'>{m['conv_cv']}%</td>"
+        f"<td style='color:{sc(m['conv_vc'],metas['conv_vc'])};font-weight:700'>{m['conv_vc']}%</td>"
+        f"<td>{m['em_cot']}</td><td>{m['em_vis']}</td>"
+        f"<td style='color:var(--gr);font-weight:700'>{m['em_cie']}</td></tr>"
+        for m in monthly
+    )
+    # ── EXECUTIVE SUMMARY ENGINE ─────────────────────────────────────────────
+    # Detect bottleneck
+    funnel_stages = [
+        ("Lead → Cot",    u3_clc,  metas["conv_lc"]),
+        ("Cot → Visita",  u3_ccv,  metas["conv_cv"]),
+        ("Visita → Cierre", u3_cvc, metas["conv_vc"]),
+    ]
+    bottleneck_stage = min(funnel_stages, key=lambda x: x[1]/max(x[2],1))
+    bottleneck_name  = bottleneck_stage[0]
+    bottleneck_rate  = bottleneck_stage[1]
+
+    # Global health signal
+    ll_pct  = ll / max(metas["llamadas"], 1)
+    cot_pct = cot / max(metas["cotizaciones"], 1)
+    if u3_cvc < 10 or (ll_pct < 0.4 and cot_pct < 0.4):
+        glob_status = "critical"
+    elif u3_ccv < 15 or ll_pct < 0.65 or cot_pct < 0.65:
+        glob_status = "watch"
+    else:
+        glob_status = "healthy"
+
+    # ── OVERVIEW exec summary ─────────────────────────────────────────────────
+    es_ov = exec_summary(
+        status    = glob_status,
+        resumen   = (
+            f"El funnel opera con {u3_leads:,} leads en 3 meses y conv. final de {u3_cvc}%. "
+            f"El cuello principal es {bottleneck_name} al {bottleneck_rate}% — "
+            f"{'por debajo del benchmark' if bottleneck_rate < 20 else 'cerca del objetivo'}. "
+            f"Esta semana: {ll} llamadas y {cot} cotizaciones vs meta de {metas['llamadas']} y {metas['cotizaciones']}."
+        ),
+        insights  = [
+            f"Conv. Vis→Cierre al {u3_cvc}% indica {'buena calidad de oportunidades avanzadas' if u3_cvc >= 25 else 'proceso de cierre con espacio de mejora'}",
+            f"El flujo WA post-cotización es el principal palanca activa — impacto directo en Cot→Vis",
+            f"71% de leads sin fuente impide optimizar inversión por canal — costo oculto semanal",
+        ],
+        criticos  = [
+            f"Cuello principal: {bottleneck_name} al {bottleneck_rate}% — mayor drop-off del funnel",
+            f"Esta semana solo {ll}/{metas['llamadas']} llamadas — {'riesgo de bajo volumen' if ll_pct < 0.6 else 'volumen controlado pero monitorear'}",
+            f"Sin UTMs activos el CPL real por canal es estimado, no medible",
+        ],
+        acciones  = [
+            f"Activar UTMs en todos los forms GHL esta semana — una tarde de setup",
+            f"Reactivar leads dic 2025 — están en ventana de cierre ahora mismo",
+            f"Documentar SOP de agendamiento de Val — 3 visitas/sem es replicable",
+        ],
+        hipotesis = [
+            f"Si Cot→Vis sube del {u3_ccv}% al 25%, los cierres crecerían ~{round((25/max(u3_ccv,1)-1)*u3_cie)} unidades adicionales sin más inversión en leads",
+            f"Activar UTMs permitiría redirigir budget de AD 9 (CPL alto) a AD 4 (mejor ROI) — impacto estimado 20-30% más cierres por peso invertido",
+        ],
+        bottleneck  = f"{bottleneck_name} · {bottleneck_rate}%",
+        opportunity = "Cot → Visita con flujo WA",
+        focus       = "UTMs + Reactivación dic 2025",
+    )
+
+    # ── FUNNEL exec summary ───────────────────────────────────────────────────
+    mes_act_conv_cv = mes_act.get("conv_cv", u3_ccv)
+    mes_act_conv_lc = mes_act.get("conv_lc", u3_clc)
+    trend_cot = "mejorando" if mes_act_conv_lc > (monthly[-2]["conv_lc"] if len(monthly) >= 2 else mes_act_conv_lc) else "cayendo"
+
+    if mes_act_conv_cv < 12:
+        funnel_status = "critical"
+    elif mes_act_conv_cv < 20 or mes_act_conv_lc < 15:
+        funnel_status = "watch"
+    else:
+        funnel_status = "healthy"
+
+    es_fn = exec_summary(
+        status   = funnel_status,
+        resumen  = (
+            f"El funnel acumula {u3_leads:,} leads en 3 meses con conv. final al {u3_cvc}%. "
+            f"La etapa mas débil es {bottleneck_name} al {bottleneck_rate}% — "
+            f"es donde se pierden más oportunidades de revenue. "
+            f"Conv. Lead→Cot está {trend_cot} este mes."
+        ),
+        insights = [
+            f"Cot→Vis al {u3_ccv}% es el principal limitante — no es problema de adquisición sino de proceso intermedio",
+            f"Vis→Cierre al {u3_cvc}% es {'sólido' if u3_cvc >= 20 else 'débil'} — {'la calidad de la visita es buena' if u3_cvc >= 20 else 'mejorar preparación pre-visita'}",
+            f"Cohorte de Feb 2026 ({mes_ant.get('leads',574)} leads) cierra en mayo — pipeline garantizado si el proceso no falla",
+        ],
+        criticos = [
+            f"Drop-off más alto: {bottleneck_name} pierde el {round(100-bottleneck_rate)}% de las oportunidades en esa etapa",
+            f"Solo {u3_vis} visitas en 3 meses con {u3_cot} cotizaciones — Cot→Vis sigue siendo el cuello estructural",
+            f"Velocidad Cot→Vis sin timestamps — no se puede medir ni optimizar el tiempo de respuesta",
+        ],
+        acciones = [
+            f"Revisar si el flujo WA se está disparando correctamente para TODOS los leads cotizados",
+            f"Analizar por qué las visitas agendadas no se están llenando — ¿disponibilidad de Alejandro?",
+            f"Activar campo Fecha Visita en GHL para medir velocidad de pipeline",
+        ],
+        hipotesis = [
+            f"Si Cot→Vis sube al 25% (desde {u3_ccv}%), los cierres pasarían de {u3_cie} a ~{round(u3_cot*0.25*u3_cvc/100)} en el mismo período — sin tocar leads ni inversión",
+            f"Si Lead→Cot sube al 22% (desde {u3_clc}%), con el volumen actual generaría ~{round(u3_leads*0.22*u3_ccv/100*u3_cvc/100)} cierres adicionales por trimestre",
+        ],
+        bottleneck  = f"{bottleneck_name} · {bottleneck_rate}%",
+        opportunity = f"Cot→Vis: {u3_ccv}% → 25% = +{round((25/max(u3_ccv,1)-1)*100)}% cierres",
+        focus       = "Flujo WA + Timestamps",
+    )
+
+    # ── EQUIPO exec summary ───────────────────────────────────────────────────
+    val_data  = agentes.get("Val Cardona", {})
+    val_sem   = val_data.get("sem", {})
+    val_mes   = val_data.get("mes", {})
+    val_conv  = val_sem.get("conv", 0)
+    val_ll    = val_sem.get("llamadas", 0)
+    val_cot   = val_sem.get("cotizaciones", 0)
+    val_conv_m= val_mes.get("conv", 0)
+
+    if val_ll < metas["llamadas"] * 0.4 or val_conv < 15:
+        eq_status = "critical"
+    elif val_ll < metas["llamadas"] * 0.7 or val_conv < metas["conv_lc"]:
+        eq_status = "watch"
+    else:
+        eq_status = "healthy"
+
+    conv_trend = "mejor que el mes" if val_conv > val_conv_m else "por debajo del mes"
+
+    es_eq = exec_summary(
+        status   = eq_status,
+        resumen  = (
+            f"Val Cardona acumula {val_mes.get('llamadas',0)} llamadas este mes con {val_conv_m}% de conv. "
+            f"Esta semana: {val_ll} llamadas y {val_cot} cotizaciones — conv al {val_conv}%, "
+            f"{conv_trend}. Alejandro cerró {u3_cie} en 3 meses con {u3_cvc}% Vis→Cierre."
+        ),
+        insights = [
+            f"Conv. llamada→cot de Val al {val_conv_m}% este mes — {'por encima del benchmark' if val_conv_m >= metas['conv_lc'] else 'por debajo de la meta de ' + str(metas['conv_lc']) + '%'}",
+            f"Alejandro cierra {u3_cvc}% de visitas — {'tasa sólida, el cuello no está en el cierre' if u3_cvc >= 20 else 'mejorar preparación pre-visita'}",
+            f"El conocimiento de Val para agendar visitas no está documentado — riesgo de concentración",
+        ],
+        criticos = [
+            f"Val hace {val_mes.get('llam_dia',0)} llamadas/día vs meta de {metas['llamadas_dia']} — {'volumen bajo' if val_mes.get('llam_dia',0) < metas['llamadas_dia']*0.7 else 'cerca de meta'}",
+            f"Solo 1 setter activa — cualquier ausencia de Val para el pipeline completamente",
+            f"Alejandro no llena EOD — sin visibilidad de su pipeline semanal de cierres",
+        ],
+        acciones = [
+            f"Documentar SOP del script de Val para agendar visitas — su técnica no es replicable sin esto",
+            f"Definir target semanal de Alejandro con seguimiento explícito en el Log",
+            f"Si Val sigue bajo meta de llamadas, revisar si hay fricción en el proceso o en la calidad del lead",
+        ],
+        hipotesis = [
+            f"Si Val llega a {metas['llamadas_dia']} llamadas/día con {metas['conv_lc']}% conv., generaría ~{round(metas['llamadas_dia']*5*metas['conv_lc']/100)} cotizaciones/semana vs {val_cot} actuales",
+            f"Con un segundo setter replicando la técnica de Val, el volumen de cotizaciones podría doblar sin cambiar el resto del funnel",
+        ],
+        bottleneck  = f"Val: {val_ll}/{metas['llamadas']} llamadas esta sem",
+        opportunity = "SOP de agendamiento de Val",
+        focus       = "Documentar SOP + EOD Alejandro",
+    )
+
+    # ── FUENTES exec summary ──────────────────────────────────────────────────
+    form_ads_top = [a for a in ads if not a.get("is_wha") and a["leads"] > 0]
+    best_ad   = min(form_ads_top, key=lambda x: x["cpl"]) if form_ads_top else {}
+    worst_ad  = max(form_ads_top, key=lambda x: x["cpl"]) if form_ads_top else {}
+    total_gasto = sum(a["gasto"] for a in ads)
+    gasto_ineficiente = sum(a["gasto"] for a in form_ads_top if a["cpl"] > 15000)
+    pct_inef  = round(gasto_ineficiente/max(total_gasto,1)*100)
+
+    if pct_inef > 60:
+        ads_status = "critical"
+    elif pct_inef > 35 or not form_ads_top:
+        ads_status = "watch"
+    else:
+        ads_status = "healthy"
+
+    es_ads = exec_summary(
+        status   = ads_status,
+        resumen  = (
+            f"{pct_inef}% del gasto Meta va a ads con CPL sobre $15K. "
+            f"El mejor ad ({best_ad.get('ad','AD 4')[:15]}) opera a ${best_ad.get('cpl',0):,} CPL — "
+            f"el peor ({worst_ad.get('ad','AD 1')[:15]}) a ${worst_ad.get('cpl',0):,}. "
+            f"Sin UTMs el CPL real por cierre es estimado."
+        ),
+        insights = [
+            f"El CPL de entrada no predice calidad — AD 9 tiene 162 leads pero baja conv. a visita",
+            f"El gasto está concentrado en volumen, no en calidad — desbalance entre leads y cierres por canal",
+            f"Sin UTMs en GHL el 71% de leads no tiene fuente — optimización ciega del presupuesto",
+        ],
+        criticos = [
+            f"${gasto_ineficiente:,} COP ({pct_inef}% del budget) en ads con CPL >$15K esta semana",
+            f"AD 9 genera el mayor volumen pero con menor tasa de conversión a etapas avanzadas",
+            f"Imposible calcular ROAS real sin UTMs — cada semana sin esto es presupuesto en negro",
+        ],
+        acciones = [
+            f"Redirigir 20-30% del budget de AD 9 hacia {best_ad.get('ad','AD 4')[:20]} — mejor CPL y calidad",
+            f"Activar UTMs en todos los forms GHL esta semana — una tarde, impacto permanente",
+            f"Pausar o reducir AD 1 (Carro pregunta) — CPL más alto con menor conversión histórica",
+        ],
+        hipotesis = [
+            f"Si el 30% del budget de AD 9 se redirige al mejor ad, el CPL promedio caería ~15-20% sin perder volumen relevante",
+            f"Con UTMs activos, en 4 semanas habría data suficiente para optimizar el 100% del presupuesto por ROI real",
+        ],
+        bottleneck  = f"AD 9: alto volumen, baja conv.",
+        opportunity = f"{best_ad.get('ad','AD 4')[:18]}: mejor CPL del stack",
+        focus       = "UTMs + Redistribuir budget AD 9",
+    )
+
+    return f"""<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Copernico - Command Center</title>
+<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;600;700;900&family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+:root{{--or:#F7931E;--gr:#41B74F;--gl:#A3D9A5;--bk:#111;--s1:#1A1A1A;--s2:#222;--s3:#2A2A2A;--bd:#333;--tx:#F0F0F0;--mu:#888;--mu2:#555;--re:#E53935;--am:#F59E0B}}
+*{{box-sizing:border-box;margin:0;padding:0}}
+body{{background:var(--bk);color:var(--tx);font-family:"Montserrat",sans-serif;font-size:13px;line-height:1.5}}
+h1,h2,h3,.logo-text,.tab,.an,.akl,.ag-per-label,.meta-label,.ch,.log-wl,.log-sl,.rml,.bp-t,.bp-n,.kl,.wlbl,.smt{{font-family:"Raleway",sans-serif}}
+.hdr{{background:var(--s1);border-bottom:1px solid var(--bd);padding:0 20px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}}
+.hdr-l{{display:flex;align-items:center;gap:12px}}
+.logo-text{{font-size:17px;font-weight:900;letter-spacing:.12em;color:#fff}}
+.logo-sub{{font-size:9px;letter-spacing:.15em;color:var(--or);font-weight:700;margin-top:1px;text-transform:uppercase;font-family:"Raleway",sans-serif}}
+.hdiv{{width:1px;height:28px;background:var(--bd);flex-shrink:0}}
+.htit{{font-size:11px;font-weight:700;color:var(--mu);letter-spacing:.08em;text-transform:uppercase}}
+.live{{display:flex;align-items:center;gap:5px;background:rgba(65,183,79,.12);border:1px solid var(--gr);border-radius:20px;padding:3px 10px}}
+.live-d{{width:6px;height:6px;border-radius:50%;background:var(--gr);animation:bl 2s infinite;flex-shrink:0}}
+@keyframes bl{{0%,100%{{opacity:1}}50%{{opacity:.3}}}}
+.live-t{{font-size:10px;font-weight:700;color:var(--gr);letter-spacing:.06em;font-family:"Raleway",sans-serif}}
+.kpi-wrap{{background:var(--s1);border-bottom:1px solid var(--bd);padding:12px 20px}}
+.kpi-label-global{{font-size:10px;font-weight:700;color:var(--or);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;font-family:"Raleway",sans-serif}}
+.kpis{{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}}
+.kpi{{background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:12px 14px;border-top:3px solid transparent}}
+.kpi.or{{border-top-color:var(--or)}}.kpi.gr{{border-top-color:var(--gr)}}.kpi.am{{border-top-color:var(--am)}}
+.kl{{font-size:9px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}}
+.kv{{font-size:26px;font-weight:900;line-height:1;margin-bottom:3px;font-family:"Raleway",sans-serif}}
+.ks{{font-size:11px;color:var(--mu)}}.kp{{font-size:11px;font-weight:700;margin-top:4px}}
+.main{{padding:16px;max-width:1200px;margin:0 auto}}
+.tabs{{display:flex;gap:2px;background:var(--s2);border-radius:7px;padding:3px;margin-bottom:14px;overflow-x:auto;-webkit-overflow-scrolling:touch}}
+.tab{{padding:7px 12px;border-radius:5px;font-size:11px;font-weight:700;color:var(--mu);border:none;background:transparent;cursor:pointer;white-space:nowrap;letter-spacing:.05em;text-transform:uppercase;transition:.12s}}
+.tab.on{{background:var(--or);color:#000}}
+.view{{display:none}}.view.on{{display:block}}
+.g2{{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}}
+.g3{{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px}}
+.card{{background:var(--s1);border:1px solid var(--bd);border-radius:10px;padding:14px}}
+.ch{{font-size:10px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px}}
+.sm{{border-radius:7px;padding:10px 12px;border-left:3px solid;margin-bottom:7px}}
+.sg{{background:rgba(65,183,79,.07);border-color:var(--gr)}}.so{{background:rgba(247,147,30,.07);border-color:var(--or)}}.sr{{background:rgba(229,57,53,.1);border-color:var(--re)}}
+.smt{{font-size:12px;font-weight:700;margin-bottom:2px}}.smb{{font-size:11px;color:var(--mu);line-height:1.5}}
+.wk{{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:10px}}
+.wcol{{background:var(--s2);border-radius:7px;padding:10px;border:1px solid var(--bd)}}
+.wcol.cur{{background:rgba(247,147,30,.08);border-color:var(--or)}}
+.wlbl{{font-size:9px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px}}
+.wlbl.curl{{color:var(--or)}}
+.wrow{{display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px solid var(--bd)}}
+.wrow:last-child{{border-bottom:none}}
+.wm{{font-size:10px;color:var(--mu)}}.wv{{font-size:12px;font-weight:700;font-family:"Raleway",sans-serif}}
+.ins{{border-radius:7px;padding:10px 12px;margin-bottom:7px}}
+.ins-r{{background:rgba(229,57,53,.1);border-left:3px solid var(--re)}}.ins-a{{background:rgba(247,147,30,.08);border-left:3px solid var(--or)}}.ins-g{{background:rgba(65,183,79,.08);border-left:3px solid var(--gr)}}
+.ins-t{{font-size:12px;font-weight:700;margin-bottom:2px;font-family:"Raleway",sans-serif}}.ins-b{{font-size:11px;color:var(--mu);line-height:1.5}}.ins-act{{font-size:11px;font-weight:700;color:var(--or);margin-top:4px}}
+.fr{{display:flex;align-items:center;gap:8px;margin-bottom:8px}}
+.fl{{font-size:11px;font-weight:700;color:var(--mu);width:110px;flex-shrink:0;font-family:"Raleway",sans-serif}}
+.ft{{flex:1;background:var(--s2);border-radius:3px;height:13px;overflow:hidden}}
+.ff{{height:100%;border-radius:3px}}.fn{{font-size:10px;color:var(--mu);width:80px;text-align:right;flex-shrink:0}}
+.ch-wrap{{position:relative;height:170px}}
+.ag-card{{background:var(--s2);border:1px solid var(--bd);border-radius:9px;padding:12px;margin-bottom:8px}}
+.ag-head{{display:flex;align-items:center;gap:10px;margin-bottom:10px}}
+.av{{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;flex-shrink:0;font-family:"Raleway",sans-serif}}
+.an{{font-size:13px;font-weight:700}}.ar{{font-size:10px;color:var(--mu)}}
+.ag-periods{{display:grid;grid-template-columns:1fr 1px 1fr;gap:0;margin-bottom:8px}}
+.ag-per{{padding:0 12px}}.ag-per:first-child{{padding-left:0}}.ag-per:last-child{{padding-right:0}}
+.ag-per-divider{{background:var(--bd)}}
+.ag-per-label{{font-size:9px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px}}
+.ag-per-label.cur{{color:var(--or)}}
+.ag-stats{{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:8px}}
+.ak{{text-align:center;background:var(--s1);border-radius:5px;padding:6px 3px}}
+.akv{{font-size:13px;font-weight:700;font-family:"Raleway",sans-serif}}.akl{{font-size:9px;color:var(--mu);margin-top:1px;text-transform:uppercase}}
+.meta-row{{display:flex;align-items:center;gap:7px;margin-top:5px}}
+.meta-label{{font-size:9px;color:var(--mu);width:85px;flex-shrink:0}}
+.meta-track{{flex:1;background:var(--s3);border-radius:3px;height:5px;overflow:hidden}}
+.meta-fill{{height:100%;border-radius:3px}}
+.meta-target{{font-size:9px;color:var(--mu2);width:50px;text-align:right;flex-shrink:0}}
+.quality-table{{width:100%;border-collapse:collapse}}
+.quality-table th{{font-size:9px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;padding:7px 6px;border-bottom:1px solid var(--bd);text-align:right;white-space:nowrap;font-family:"Raleway",sans-serif}}
+.quality-table th:first-child{{text-align:left}}
+.quality-table td{{padding:7px 6px;font-size:11px;border-bottom:1px solid var(--bd);text-align:right;color:var(--tx);vertical-align:middle}}
+.quality-table td:first-child{{text-align:left}}
+.quality-table tr:last-child td{{border-bottom:none}}
+.quality-table tr:hover td{{background:var(--s2)}}
+.log-e{{background:var(--s2);border:1px solid var(--bd);border-radius:9px;padding:12px;margin-bottom:9px}}
+.log-e.log-cur{{border-color:var(--or);background:rgba(247,147,30,.04)}}
+.log-wl{{font-size:10px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px}}
+.log-cur .log-wl{{color:var(--or)}}
+.log-chips{{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px}}
+.lc{{font-size:10px;padding:2px 7px;border-radius:3px;font-weight:700;font-family:"Raleway",sans-serif}}
+.lcg{{background:rgba(65,183,79,.18);color:var(--gr)}}.lcr{{background:rgba(229,57,53,.18);color:var(--re)}}.lca{{background:rgba(247,147,30,.15);color:var(--or)}}.lcn{{background:var(--s3);color:var(--mu)}}
+.log-sl{{font-size:9px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px;margin-top:8px}}
+.log-box{{border-radius:5px;padding:8px 10px;font-size:11px;line-height:1.6;color:var(--tx)}}
+.log-dec{{background:var(--s1);border-left:2px solid var(--or)}}
+.log-eje{{background:var(--s1);border-left:2px solid var(--gr);color:var(--gl)}}
+.log-con{{background:var(--s1);border-left:2px solid var(--gl)}}
+.log-empty{{font-size:11px;color:var(--mu2);font-style:italic;padding:6px 10px;background:var(--s3);border-radius:5px}}
+.bp-row{{display:grid;grid-template-columns:28px 1fr 1fr;gap:10px;padding:10px 0;border-bottom:1px solid var(--bd)}}
+.bp-row:last-child{{border-bottom:none}}
+.bp-n{{font-size:14px;font-weight:900;color:var(--or)}}
+.bp-t{{font-size:12px;font-weight:700;margin-bottom:2px}}.bp-d{{font-size:11px;color:var(--mu);line-height:1.4}}.bp-a{{font-size:11px;font-weight:600;color:var(--gr);line-height:1.4}}
+.bptag{{display:inline-block;font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;margin-top:3px;font-family:"Raleway",sans-serif}}
+.bp-done{{background:rgba(65,183,79,.2);color:var(--gr)}}.bp-act{{background:rgba(247,147,30,.15);color:var(--or)}}
+.rm{{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}}
+.rmc{{background:var(--s2);border-radius:7px;padding:10px}}
+.rml{{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px}}
+.rmi{{font-size:11px;color:var(--mu);line-height:1.7}}
+.vel-g{{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}}
+.vel{{text-align:center;background:var(--s2);border-radius:7px;padding:10px}}
+.velv{{font-size:22px;font-weight:900;line-height:1;font-family:"Raleway",sans-serif}}.vell{{font-size:9px;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;margin-top:3px}}.vels{{font-size:10px;color:var(--mu2);margin-top:2px}}
+.recon{{width:100%;border-collapse:collapse}}
+.recon th{{font-size:9px;font-weight:700;color:var(--mu);text-transform:uppercase;padding:6px 8px;border-bottom:1px solid var(--bd);text-align:right;font-family:"Raleway",sans-serif}}
+.recon th:first-child{{text-align:left}}
+.recon td{{padding:7px 8px;font-size:12px;border-bottom:1px solid var(--bd);text-align:right;color:var(--tx)}}
+.recon td:first-child{{text-align:left;font-weight:600}}
+.recon tr:last-child td{{border-bottom:none}}
+.recon tr:hover td{{background:var(--s2)}}
+.ftr{{text-align:center;padding:20px;border-top:1px solid var(--bd);margin-top:24px}}
+.ftr-main{{color:var(--mu);font-size:11px;font-family:"Raleway",sans-serif;margin-bottom:6px}}
+.ftr-brand{{display:flex;align-items:center;justify-content:center;gap:8px}}
+.ftr-dev{{font-size:10px;color:var(--mu2)}}
+.ftr-link{{color:var(--or);text-decoration:none;font-size:11px;font-weight:700;font-family:"Raleway",sans-serif;letter-spacing:.05em}}
+.ftr-link:hover{{color:var(--gr)}}
+/* Executive Summary Engine */
+.exec-sum{{border-radius:10px;padding:14px 16px;margin-bottom:14px;background:var(--s1);border:1px solid var(--bd);border-left:4px solid var(--gr)}}
+.es-top{{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px}}
+.es-status{{display:flex;align-items:center;gap:8px;padding:5px 12px;border-radius:20px}}
+.es-status-label{{font-size:12px;font-weight:900;letter-spacing:.08em;font-family:"Raleway",sans-serif}}
+.es-badges{{display:flex;gap:6px;flex-wrap:wrap}}
+.es-badge{{font-size:9px;font-weight:700;padding:3px 8px;border-radius:4px;letter-spacing:.05em;font-family:"Raleway",sans-serif}}
+.es-bot{{background:rgba(229,57,53,.15);color:var(--re)}}
+.es-opp{{background:rgba(65,183,79,.15);color:var(--gr)}}
+.es-foc{{background:rgba(247,147,30,.15);color:var(--or)}}
+.es-grid{{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr 1.2fr;gap:10px}}
+.es-col{{background:var(--s2);border-radius:7px;padding:10px 11px}}
+.es-ttl{{font-size:9px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.08em;margin-bottom:7px;font-family:"Raleway",sans-serif}}
+.es-text{{font-size:11px;color:var(--tx);line-height:1.6}}
+.es-item{{font-size:11px;line-height:1.5;padding:3px 0;border-bottom:1px solid var(--bd)}}
+.es-item:last-child{{border-bottom:none}}
+.es-item-i{{color:var(--gl)}}.es-item-c{{color:var(--re)}}.es-item-a{{color:var(--or);font-weight:600}}
+.es-hip{{font-size:11px;color:var(--gl);line-height:1.6;font-style:italic;margin-bottom:5px}}
+@media(max-width:900px){{.es-grid{{grid-template-columns:1fr 1fr;row-gap:8px}}}}
+@media(max-width:600px){{.es-grid{{grid-template-columns:1fr}}}}
+/* RESPONSIVE MOBILE */
+@media(max-width:768px){{
+  .hdr{{padding:0 12px;height:50px}}
+  .logo-text{{font-size:14px}}
+  .htit{{display:none}}
+  .hdiv{{display:none}}
+  .kpi-wrap{{padding:10px 12px}}
+  .kpis{{grid-template-columns:1fr 1fr;gap:6px}}
+  .kv{{font-size:20px}}
+  .main{{padding:10px}}
+  .g2,.g3,.rm,.vel-g{{grid-template-columns:1fr}}
+  .wk{{grid-template-columns:1fr}}
+  .ag-periods{{grid-template-columns:1fr}}
+  .ag-per-divider{{height:1px;width:100%;margin:8px 0}}
+  .ag-stats{{grid-template-columns:repeat(2,1fr)}}
+  .quality-table{{font-size:10px}}
+  .quality-table th,.quality-table td{{padding:5px 4px}}
+  .bp-row{{grid-template-columns:24px 1fr}}
+  .rm{{grid-template-columns:1fr 1fr}}
+  .tabs{{gap:1px}}
+  .tab{{padding:6px 8px;font-size:10px}}
+}}
+@media(max-width:480px){{
+  .kpis{{grid-template-columns:1fr 1fr}}
+  .rm{{grid-template-columns:1fr}}
+  .quality-table th:nth-child(n+5),.quality-table td:nth-child(n+5){{display:none}}
+}}
+</style>
+</head>
+<body>
+<header class="hdr">
+  <div class="hdr-l">
+    <div style="display:flex;align-items:center;gap:10px">
+      <img src="data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCANTA1MDASIAAhEBAxEB/8QAHQABAAIDAQEBAQAAAAAAAAAAAAcIBQYJBAMCAf/EAF4QAAIBAwIDBQQEBwkJDAkFAAABAgMEBQYRBxIhCBMxQVEUImFxCTKBkRUjQlJyobEWNDdic3R2grQXJDM2OEOys9ElVmN1kpOVosHC0uEYNTlTVFWDhKQmlMPT8P/EABsBAQACAwEBAAAAAAAAAAAAAAAEBQIDBgEH/8QANBEBAAIBAgQDBQYHAQEAAAAAAAECAwQRBRIhMRNBUTJhcbHRBiIzgaHwFCM0kcHh8UIk/9oADAMBAAIRAxEAPwCmQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA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AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//Z" alt="Copernico" style="height:36px;width:auto">
+    </div>
+    <div class="hdiv"></div>
+    <div class="htit">Command Center</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <div class="live"><div class="live-d"></div><span class="live-t">LIVE</span></div>
+    <div style="font-size:10px;color:var(--mu)">Act. <b style="color:var(--or)">{ahora}</b></div>
+  </div>
+</header>
+
+<div class="kpi-wrap">
+  <div class="kpi-label-global">Ultimos 3 meses · {u3_label}</div>
+  <div class="kpis">
+    <div class="kpi or"><div class="kl">Leads</div><div class="kv">{u3_leads:,}</div><div class="ks">ultimos 3 meses</div><div class="kp" style="color:var(--or)">base 100%</div></div>
+    <div class="kpi gr"><div class="kl">Cotizaciones</div><div class="kv">{u3_cot:,}</div><div class="ks">Conv. Lead a Cot</div><div class="kp" style="color:var(--gr)">{u3_clc}% L-C</div></div>
+    <div class="kpi am"><div class="kl">Visitas tecnicas</div><div class="kv">{u3_vis:,}</div><div class="ks">Conv. Cot a Vis</div><div class="kp" style="color:var(--am)">{u3_ccv}% C-V</div></div>
+    <div class="kpi gr"><div class="kl">Cierres</div><div class="kv" style="color:var(--gr)">{u3_cie:,}</div><div class="ks">Conv. Vis a Cie</div><div class="kp" style="color:var(--gr)">{u3_cvc}% V-C</div></div>
+  </div>
+</div>
+
+<div class="main">
+<div class="tabs">
+  <button class="tab on" onclick="go('overview',this)">Overview</button>
+  <button class="tab" onclick="go('funnel',this)">Funnel</button>
+  <button class="tab" onclick="go('equipo',this)">Equipo</button>
+  <button class="tab" onclick="go('fuentes',this)">Fuentes y Ads</button>
+  <button class="tab" onclick="go('log',this)">Activity Log</button>
+  <button class="tab" onclick="go('blueprint',this)">Blueprint</button>
+</div>
+
+<!-- OVERVIEW -->
+<div id="tab-overview" class="view on">
+  {es_ov}
+  <div class="g2">
+    <div>
+      <div class="ch" style="margin-top:0">Semaforos · semana actual</div>
+      <div class="sm {sc_class(ll,metas['llamadas'])}"><div class="smt">Llamadas · {ll}/{metas['llamadas']} · {"en meta" if ll>=metas['llamadas']*0.85 else "cerca" if ll>=metas['llamadas']*0.6 else "bajo meta"}</div><div class="smb">Conv. llamada-cot esta semana: {round(cot/ll*100,1) if ll>0 else 0}%. Meta: {metas['conv_lc']}%.</div></div>
+      <div class="sm {sc_class(cot,metas['cotizaciones'])}"><div class="smt">Cotizaciones · {cot}/{metas['cotizaciones']} · {"en meta" if cot>=metas['cotizaciones']*0.85 else "cerca" if cot>=metas['cotizaciones']*0.6 else "bajo meta"}</div><div class="smb">Meta semanal {metas['cotizaciones']} cotizaciones. Historico 3 meses: {u3_clc}% de leads.</div></div>
+      <div class="sm {sc_class(vis,metas['visitas'])}"><div class="smt">Visitas · {vis}/{metas['visitas']} · {"en meta" if vis>=metas['visitas']*0.85 else "cerca" if vis>=metas['visitas']*0.6 else "cuello activo"}</div><div class="smb">Cot-Vis historico {u3_ccv}%. Flujo WA post-cotizacion activo — monitorear semana a semana.</div></div>
+      <div class="sm {sc_class(cie,metas['cierres'])}"><div class="smt">Cierres · {cie}/{metas['cierres']} · {"meta cumplida" if cie>=metas['cierres'] else "en progreso"}</div><div class="smb">Ciclo 90 dias. Los cierres de esta semana son leads de hace 3 meses.</div></div>
+      <div class="ch" style="margin-top:14px">Comparacion · ultimas 3 semanas (EOD)</div>
+      <div class="wk">
+        <div class="wcol"><div class="wlbl">Sem anterior anterior</div>
+          <div class="wrow"><span class="wm">Llamadas</span><span class="wv" style="color:var(--mu)">{ll_a2}</span></div>
+          <div class="wrow"><span class="wm">Cotiz.</span><span class="wv" style="color:var(--mu)">{cot_a2}</span></div>
+          <div class="wrow"><span class="wm">Visitas</span><span class="wv" style="color:var(--mu)">{vis_a2}</span></div>
+          <div class="wrow"><span class="wm">Cierres</span><span class="wv" style="color:var(--mu)">{cie_a2}</span></div>
+        </div>
+        <div class="wcol"><div class="wlbl">Semana anterior</div>
+          <div class="wrow"><span class="wm">Llamadas</span><span class="wv" style="color:{sc(ll_a,metas['llamadas'])}">{ll_a}</span></div>
+          <div class="wrow"><span class="wm">Cotiz.</span><span class="wv" style="color:{sc(cot_a,metas['cotizaciones'])}">{cot_a}</span></div>
+          <div class="wrow"><span class="wm">Visitas</span><span class="wv" style="color:{sc(vis_a,metas['visitas'])}">{vis_a}</span></div>
+          <div class="wrow"><span class="wm">Cierres</span><span class="wv" style="color:{sc(cie_a,metas['cierres'])}">{cie_a}</span></div>
+        </div>
+        <div class="wcol cur"><div class="wlbl curl">Esta semana · HOY</div>
+          <div class="wrow"><span class="wm">Llamadas</span><span class="wv" style="color:{sc(ll,metas['llamadas'])}">{ll}</span></div>
+          <div class="wrow"><span class="wm">Cotiz.</span><span class="wv" style="color:{sc(cot,metas['cotizaciones'])}">{cot}</span></div>
+          <div class="wrow"><span class="wm">Visitas</span><span class="wv" style="color:{sc(vis,metas['visitas'])}">{vis}</span></div>
+          <div class="wrow"><span class="wm">Cierres</span><span class="wv" style="color:{sc(cie,metas['cierres'])}">{cie}</span></div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="ch" style="margin-top:0">Insights criticos</div>
+      <div class="ins ins-g"><div class="ins-t">Flujo WA post-cotizacion activo</div><div class="ins-b">Monitorear que Cot-Vis se mantenga por encima del {metas['conv_cv']}% sostenido.</div></div>
+      <div class="ins ins-a"><div class="ins-t">Cohorte Feb 2026 cierra en mayo</div><div class="ins-b">{mes_ant.get('leads',574)} leads de feb, {mes_ant.get('conv_lc',19.9)}% conv = {mes_ant.get('cot',114)} cotizaciones activas. Con ciclo 90 dias cierran en mayo. Preparar disponibilidad de Alejandro.</div></div>
+      <div class="ins ins-r"><div class="ins-t">71% leads sin fuente · CPL real imposible</div><div class="ins-b">Sin UTMs no se sabe que ad genera los leads que cotizan y cierran.</div><div class="ins-act">UTMs en todos los forms GHL · prioridad 1</div></div>
+      <div class="ins ins-a"><div class="ins-t">AD 4 y AD 3 · mejor ROI real del stack</div><div class="ins-b">El CPL real por cierre es el numero que importa. Ver tab Fuentes y Ads.</div><div class="ins-act">Redirigir 20% budget AD 9 hacia AD 4</div></div>
+      <div class="g3" style="margin-top:14px;margin-bottom:0">
+        <div style="background:var(--s2);border-radius:7px;padding:10px;text-align:center"><div style="font-size:9px;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;font-family:'Raleway',sans-serif">Cierres esperados</div><div style="font-size:20px;font-weight:900;color:var(--gr);font-family:'Raleway',sans-serif">3-5</div><div style="font-size:10px;color:var(--mu)">cohorte dic 2025</div></div>
+        <div style="background:var(--s2);border-radius:7px;padding:10px;text-align:center"><div style="font-size:9px;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;font-family:'Raleway',sans-serif">Cot. en pipeline</div><div style="font-size:20px;font-weight:900;color:var(--or);font-family:'Raleway',sans-serif">{u3_cot}</div><div style="font-size:10px;color:var(--mu)">ult. 3 meses</div></div>
+        <div style="background:var(--s2);border-radius:7px;padding:10px;text-align:center"><div style="font-size:9px;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;font-family:'Raleway',sans-serif">Ciclo confirmado</div><div style="font-size:20px;font-weight:900;color:var(--gl);font-family:'Raleway',sans-serif">~90d</div><div style="font-size:10px;color:var(--mu)">dic cierra mar</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FUNNEL -->
+<div id="tab-funnel" class="view">
+  {es_fn}
+  <div class="card" style="margin-bottom:10px">
+    <div class="ch">Funnel mensual · Info General 2026</div>
+    <div style="overflow-x:auto">
+    <table class="recon">
+      <thead><tr><th style="text-align:left">Mes</th><th>Leads</th><th>LM Cot</th><th>LM Vis</th><th>LM Cie</th><th>Conv L-C</th><th>Conv C-V</th><th>Conv V-C</th><th>EM Cot</th><th>EM Vis</th><th>EM Cie</th></tr></thead>
+      <tbody>
+        {monthly_rows}
+      </tbody>
+    </table>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="card"><div class="ch">Leads y cotizaciones por mes</div><div class="ch-wrap"><canvas id="cMes"></canvas></div></div>
+    <div class="card"><div class="ch">Conversion por etapa · mes a mes</div><div class="ch-wrap"><canvas id="cConv"></canvas></div></div>
+  </div>
+  <div class="card" style="margin-bottom:10px">
+    <div class="ch" style="color:var(--or)">Flujo total acumulado · Lead Total (todas las cohortes)</div>
+    <div style="display:grid;grid-template-columns:1fr 40px 1fr 40px 1fr 40px 1fr;gap:0;align-items:center;padding:8px 0">
+      <div style="text-align:center;background:var(--s2);border-radius:8px;padding:12px">
+        <div style="font-size:22px;font-weight:900;color:var(--or);font-family:'Raleway',sans-serif">{u3_leads:,}</div>
+        <div style="font-size:10px;color:var(--mu);margin-top:3px;text-transform:uppercase;letter-spacing:.06em">Leads</div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-size:10px;font-weight:700;color:{sc(u3_clc,metas['conv_lc'])}">{u3_clc}%</div>
+        <div style="font-size:16px;color:var(--mu)">→</div>
+        <div style="font-size:9px;color:var(--mu)">L→C</div>
+      </div>
+      <div style="text-align:center;background:var(--s2);border-radius:8px;padding:12px">
+        <div style="font-size:22px;font-weight:900;color:var(--gr);font-family:'Raleway',sans-serif">{u3_cot}</div>
+        <div style="font-size:10px;color:var(--mu);margin-top:3px;text-transform:uppercase;letter-spacing:.06em">Cotizaciones</div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-size:10px;font-weight:700;color:{sc(u3_ccv,metas['conv_cv'])}">{u3_ccv}%</div>
+        <div style="font-size:16px;color:var(--mu)">→</div>
+        <div style="font-size:9px;color:var(--mu)">C→V</div>
+      </div>
+      <div style="text-align:center;background:var(--s2);border-radius:8px;padding:12px">
+        <div style="font-size:22px;font-weight:900;color:var(--am);font-family:'Raleway',sans-serif">{u3_vis}</div>
+        <div style="font-size:10px;color:var(--mu);margin-top:3px;text-transform:uppercase;letter-spacing:.06em">Visitas</div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-size:10px;font-weight:700;color:{sc(u3_cvc,metas['conv_vc'])}">{u3_cvc}%</div>
+        <div style="font-size:16px;color:var(--mu)">→</div>
+        <div style="font-size:9px;color:var(--mu)">V→C</div>
+      </div>
+      <div style="text-align:center;background:var(--s2);border-radius:8px;padding:12px">
+        <div style="font-size:22px;font-weight:900;color:var(--gr);font-family:'Raleway',sans-serif">{u3_cie}</div>
+        <div style="font-size:10px;color:var(--mu);margin-top:3px;text-transform:uppercase;letter-spacing:.06em">Cierres</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px">
+      <div style="background:rgba(247,147,30,.08);border-radius:6px;padding:8px;text-align:center">
+        <div style="font-size:9px;color:var(--mu);text-transform:uppercase;letter-spacing:.06em">De {u3_leads:,} leads</div>
+        <div style="font-size:13px;font-weight:700;color:var(--or)">{u3_cot} cotizan · {u3_clc}%</div>
+      </div>
+      <div style="background:rgba(245,158,11,.08);border-radius:6px;padding:8px;text-align:center">
+        <div style="font-size:9px;color:var(--mu);text-transform:uppercase;letter-spacing:.06em">De {u3_cot} cotizaciones</div>
+        <div style="font-size:13px;font-weight:700;color:var(--am)">{u3_vis} visitan · {u3_ccv}%</div>
+      </div>
+      <div style="background:rgba(65,183,79,.08);border-radius:6px;padding:8px;text-align:center">
+        <div style="font-size:9px;color:var(--mu);text-transform:uppercase;letter-spacing:.06em">De {u3_vis} visitas</div>
+        <div style="font-size:13px;font-weight:700;color:var(--gr)">{u3_cie} cierran · {u3_cvc}%</div>
+      </div>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="ch">Funnel acumulado · ultimos 3 meses</div>
+      <div class="fr"><div class="fl">Leads</div><div class="ft"><div class="ff" style="width:100%;background:var(--or)"></div></div><div class="fn">{u3_leads:,} · 100%</div></div>
+      <div class="fr"><div class="fl">Cotizaciones</div><div class="ft"><div class="ff" style="width:{u3_clc}%;background:var(--gr)"></div></div><div class="fn">{u3_cot:,} · {u3_clc}%</div></div>
+      <div class="fr"><div class="fl">Visitas</div><div class="ft"><div class="ff" style="width:{round(u3_vis/max(u3_leads,1)*100,1)}%;background:var(--am)"></div></div><div class="fn">{u3_vis:,} · {round(u3_vis/max(u3_leads,1)*100,1)}%</div></div>
+      <div class="fr"><div class="fl">Cierres</div><div class="ft"><div class="ff" style="width:{round(u3_cie/max(u3_leads,1)*100,1)}%;background:var(--re)"></div></div><div class="fn">{u3_cie:,} · {round(u3_cie/max(u3_leads,1)*100,1)}%</div></div>
+    </div>
+    <div class="card">
+      <div class="ch">Velocidad del pipeline</div>
+      <div class="vel-g">
+        <div class="vel"><div class="velv" style="color:var(--gr)">1d</div><div class="vell">Lead a Cot</div><div class="vels">mediana</div></div>
+        <div class="vel"><div class="velv" style="color:var(--re)">?</div><div class="vell">Cot a Vis</div><div class="vels">sin timestamps</div></div>
+        <div class="vel"><div class="velv" style="color:var(--gr)">21d</div><div class="vell">Vis a Cierre</div><div class="vels">mediana</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EQUIPO -->
+<div id="tab-equipo" class="view">
+  {es_eq}
+  <div class="ch" style="margin-top:0;margin-bottom:8px">Setter activa</div>
+  {ag_html}
+  <div class="ch" style="margin-top:4px;margin-bottom:8px">Closer</div>
+  <div class="ag-card">
+    <div class="ag-head">
+      <div class="av" style="background:rgba(65,183,79,.15);color:var(--gr)">AB</div>
+      <div style="flex:1"><div class="an">Alejandro B. (Fundador) <span style="font-size:9px;padding:2px 7px;border-radius:3px;background:rgba(65,183,79,.15);color:var(--gr);margin-left:6px;font-weight:700;font-family:'Raleway',sans-serif">CLOSER</span></div><div class="ar">Actualiza CRM directamente · sin EOD de setter</div></div>
+    </div>
+    <div class="ag-periods">
+      <div class="ag-per">
+        <div class="ag-per-label">Ultimo mes · {mes_ant.get("mes","Febrero")}</div>
+        <div class="ag-stats">
+          <div class="ak"><div class="akv" style="color:{sc(mes_ant.get("cie",0),metas["cierres"]*4)}">{mes_ant.get("em_cie",mes_ant.get("cie",0))}</div><div class="akl">Cierres EM</div></div>
+          <div class="ak"><div class="akv">{mes_ant.get("em_vis",mes_ant.get("vis",0))}</div><div class="akl">Visitas EM</div></div>
+          <div class="ak"><div class="akv" style="color:{sc(mes_ant.get("conv_vc",0),metas["conv_vc"])}">{mes_ant.get("conv_vc",0)}%</div><div class="akl">Vis-Cie %</div></div>
+          <div class="ak"><div class="akv" style="color:var(--mu)">—</div><div class="akl">EOD</div></div>
+        </div>
+        <div class="meta-row"><div class="meta-label">Meta cierres/mes</div>
+        <div class="meta-track"><div class="meta-fill" style="width:{min(int(mes_ant.get("em_cie",0)/max(metas["cierres"]*4,1)*100),100)}%;background:{sc(mes_ant.get("em_cie",0),metas["cierres"]*4)}"></div></div>
+        <span style="font-size:10px;font-weight:700;color:{sc(mes_ant.get("em_cie",0),metas["cierres"]*4)}">{mes_ant.get("em_cie",0)}/{metas["cierres"]*4}</span>
+        <div class="meta-target">meta:{metas["cierres"]*4}</div></div>
+      </div>
+      <div class="ag-per-divider"></div>
+      <div class="ag-per">
+        <div class="ag-per-label cur">Esta semana</div>
+        <div class="ag-stats">
+          <div class="ak"><div class="akv" style="color:{sc(cie,metas["cierres"])}">{cie}</div><div class="akl">Cierres</div></div>
+          <div class="ak"><div class="akv">{vis}</div><div class="akl">Visitas</div></div>
+          <div class="ak"><div class="akv" style="color:{sc(u3_cvc,metas["conv_vc"])}">{u3_cvc}%</div><div class="akl">Vis-Cie hist.</div></div>
+          <div class="ak"><div class="akv" style="color:var(--mu)">—</div><div class="akl">EOD</div></div>
+        </div>
+        <div class="meta-row"><div class="meta-label">Meta cierres/sem</div>
+        <div class="meta-track"><div class="meta-fill" style="width:{min(int(cie/max(metas["cierres"],1)*100),100)}%;background:{sc(cie,metas["cierres"])}"></div></div>
+        <span style="font-size:10px;font-weight:700;color:{sc(cie,metas["cierres"])}">{cie}/{metas["cierres"]}</span>
+        <div class="meta-target">meta:{metas["cierres"]}</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:10px">
+    <div class="ch">Actividad semanal EOD · ultimas 8 semanas</div>
+    <div class="ch-wrap"><canvas id="cEOD"></canvas></div>
+  </div>
+</div>
+
+<!-- FUENTES -->
+<div id="tab-fuentes" class="view">
+  {es_ads}
+  <div class="card" style="margin-bottom:10px">
+    <div class="ch" style="color:var(--or)">Calidad por anuncio · CPL entrada vs conversion real</div>
+    <div style="font-size:11px;color:var(--mu);margin-bottom:10px">El CPL de entrada no dice nada sobre calidad. Lo que importa es cuantos de esos leads cotizan, visitan y cierran.</div>
+    <div style="overflow-x:auto">
+    <table class="quality-table">
+      <thead><tr><th>Anuncio</th><th>Leads</th><th>CPL entrada</th><th>Cot%</th><th>Vis%</th><th>Cie%</th><th>CPL real*</th><th>Verdict.</th></tr></thead>
+      <tbody>{ads_rows}</tbody>
+    </table>
+    </div>
+    <div style="margin-top:10px;padding:8px 10px;background:var(--s2);border-radius:6px;font-size:11px;color:var(--mu)"><b style="color:var(--tx)">CPL real</b> = CPL entrada / tasa de cierre. <b style="color:var(--am)">Estimado hasta activar UTMs en GHL.</b></div>
+  </div>
+  <div class="g2">
+    <div class="card"><div class="ch">Leads por anuncio (Form)</div><div class="ch-wrap"><canvas id="cAL"></canvas></div></div>
+    <div class="card"><div class="ch">CPL real por cierre ($COP)</div><div class="ch-wrap"><canvas id="cAC"></canvas></div></div>
+  </div>
+</div>
+
+<!-- LOG -->
+<div id="tab-log" class="view">
+  <div style="background:var(--s2);border-radius:7px;padding:10px 12px;margin-bottom:12px;font-size:11px;color:var(--mu)">
+    <b style="color:var(--or)">Flujo:</b> Escribes la decision en Google Sheets pestana <code style="background:var(--s3);padding:1px 5px;border-radius:3px;color:var(--gl)">Log_Semanal</code>. El script la lee y muestra la consecuencia en numeros automaticamente.
+  </div>
+  {log_html}
+</div>
+
+<!-- BLUEPRINT -->
+<div id="tab-blueprint" class="view">
+  <div class="card" style="margin-bottom:10px">
+    <div class="ch" style="color:var(--or)">Estado actual · resuelto vs pendiente</div>
+    <div class="bp-row"><div class="bp-n">v</div><div><div class="bp-t">Flujo WA post-cotizacion activo</div><div class="bp-d">Cot-Vis mejoro. Monitorear sostenimiento.</div><span class="bptag bp-done">ACTIVO</span></div><div><div class="bp-a">Meta: mantener Cot-Vis mayor al {metas['conv_cv']}% sostenido.</div></div></div>
+    <div class="bp-row"><div class="bp-n">v</div><div><div class="bp-t">Opportunity Value en GHL</div><div class="bp-d">Activado. Pipeline Value calculable en 4 semanas.</div><span class="bptag bp-done">ACTIVO</span></div><div><div class="bp-a">En 4 semanas: ticket promedio real, Pipeline Value COP.</div></div></div>
+    <div class="bp-row"><div class="bp-n">></div><div><div class="bp-t">UTMs en forms GHL</div><div class="bp-d">71% leads sin fuente. CPL real incalculable.</div><span class="bptag bp-act">PENDIENTE</span></div><div><div class="bp-a">Con UTMs: la tabla de calidad por ad pasa de estimaciones a datos exactos.</div></div></div>
+    <div class="bp-row"><div class="bp-n">></div><div><div class="bp-t">SOP script de agendamiento de Val</div><div class="bp-d">Val logro 3 visitas en una semana. Sin SOP ese conocimiento no se replica.</div><span class="bptag bp-act">PENDIENTE</span></div><div><div class="bp-a">Documentar en formato guion + checklist.</div></div></div>
+    <div class="bp-row"><div class="bp-n">></div><div><div class="bp-t">Campana reactivacion leads dic 2025</div><div class="bp-d">Leads dic en ventana de cierre de 90 dias ahora mismo.</div><span class="bptag bp-act">ESTA SEMANA</span></div><div><div class="bp-a">Filtrar en GHL y campana WA de Alejandro.</div></div></div>
+  </div>
+  <div class="card">
+    <div class="ch" style="color:var(--gr)">Roadmap · proximos 3 meses</div>
+    <div class="rm">
+      <div class="rmc"><div class="rml" style="color:var(--or)">Esta semana</div><div class="rmi">v Flujo WA activo<br>v Opportunity Value<br>&gt; UTMs en forms<br>&gt; SOP Val<br>&gt; Reactivar leads dic</div></div>
+      <div class="rmc"><div class="rml" style="color:var(--am)">Mes 1</div><div class="rmi">&gt; Ticket promedio real<br>&gt; Pipeline Value COP<br>&gt; CPL real exacto<br>&gt; Dashboard 100% real</div></div>
+      <div class="rmc"><div class="rml" style="color:var(--gl)">Mes 2</div><div class="rmi">&gt; Pipeline Velocity COP<br>&gt; CAC por canal<br>&gt; Alert leads zombies<br>&gt; Reporte semanal auto</div></div>
+      <div class="rmc"><div class="rml" style="color:var(--gr)">Mes 3</div><div class="rmi">&gt; Dashboard agencia global<br>&gt; Integracion Apify<br>&gt; Comisiones vs cierres CRM</div></div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<footer class="ftr">
+  <div class="ftr-main">COPERNICO · Energia Renovable · Sistema de Inteligencia Comercial · Actualizado automaticamente cada semana</div>
+  <div class="ftr-brand">
+    <span class="ftr-dev">Desarrollado por</span>
+    <a href="https://groma.com.co/" target="_blank" class="ftr-link">GROMA AGENCY</a>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+// Tabs
+function go(id,btn){{
+  document.querySelectorAll('.tab').forEach(function(t){{t.classList.remove('on');}});
+  document.querySelectorAll('.view').forEach(function(v){{v.classList.remove('on');}});
+  var el=document.getElementById('tab-'+id);
+  if(el) el.classList.add('on');
+  if(btn) btn.classList.add('on');
+}}
+
+// Inicializar todos los charts cuando la pagina carga completamente
+window.addEventListener('load',function(){{
+  var or='#F7931E',gr='#41B74F',gl='#A3D9A5',mu='#555',gc='rgba(255,255,255,0.04)';
+  var BASE={{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{{legend:{{labels:{{color:'#777',font:{{size:10}},boxWidth:10}}}}}},
+    scales:{{
+      x:{{ticks:{{color:mu,font:{{size:10}}}},grid:{{color:gc}}}},
+      y:{{ticks:{{color:mu,font:{{size:10}}}},grid:{{color:gc}}}}
+    }}
+  }};
+
+  // Funnel - leads y cotizaciones
+  var cMes=document.getElementById('cMes');
+  if(cMes) new Chart(cMes,{{type:'bar',data:{{
+    labels:{mes_labels},
+    datasets:[
+      {{label:'Leads',data:{mes_leads_j},backgroundColor:'rgba(247,147,30,.2)',borderColor:or,borderWidth:1.5,borderRadius:3}},
+      {{label:'Cotizaciones',data:{mes_cot_j},backgroundColor:'rgba(65,183,79,.2)',borderColor:gr,borderWidth:1.5,borderRadius:3}},
+      {{label:'Visitas',data:{mes_vis_j},backgroundColor:'rgba(163,217,165,.2)',borderColor:gl,borderWidth:1.5,borderRadius:3}}
+    ]}},options:BASE}});
+
+  // Funnel - conversion
+  var cConv=document.getElementById('cConv');
+  if(cConv) new Chart(cConv,{{type:'line',data:{{
+    labels:{mes_labels},
+    datasets:[
+      {{label:'L-Cot%',data:{mes_clc_j},borderColor:or,tension:.4,pointRadius:3,borderWidth:2,backgroundColor:'transparent'}},
+      {{label:'Cot-Vis%',data:{mes_ccv_j},borderColor:gr,tension:.4,pointRadius:3,borderWidth:2,backgroundColor:'transparent'}},
+      {{label:'Vis-Cie%',data:{mes_cvc_j},borderColor:gl,tension:.4,pointRadius:3,borderWidth:2,backgroundColor:'transparent'}}
+    ]}},options:{{...BASE,scales:{{
+      x:{{ticks:{{color:mu,font:{{size:10}}}},grid:{{color:gc}}}},
+      y:{{ticks:{{color:mu,font:{{size:10}},callback:function(v){{return v+'%'}}}},grid:{{color:gc}}}}
+    }}}}}});
+
+  // Equipo - EOD semanal
+  var cEOD=document.getElementById('cEOD');
+  if(cEOD) new Chart(cEOD,{{type:'line',data:{{
+    labels:{sem_labels},
+    datasets:[
+      {{label:'Llamadas',data:{sem_ll_j},borderColor:or,backgroundColor:'rgba(247,147,30,.07)',tension:.4,fill:true,pointRadius:3}},
+      {{label:'Cotizaciones',data:{sem_cot_j2},borderColor:gr,backgroundColor:'rgba(65,183,79,.07)',tension:.4,fill:true,pointRadius:3}}
+    ]}},options:BASE}});
+
+  // Ads - leads por anuncio
+  var cAL=document.getElementById('cAL');
+  if(cAL) new Chart(cAL,{{type:'bar',data:{{
+    labels:{ads_names_j},
+    datasets:[{{label:'Leads',data:{ads_leads_j},backgroundColor:'rgba(247,147,30,.3)',borderColor:or,borderWidth:1.5,borderRadius:4}}]
+  }},options:{{...BASE,indexAxis:'y',plugins:{{legend:{{display:false}}}},
+    scales:{{
+      x:{{min:0,ticks:{{color:mu,font:{{size:10}}}},grid:{{color:gc}}}},
+      y:{{ticks:{{color:mu,font:{{size:10}}}},grid:{{color:gc}}}}
+    }}}}}});
+
+  // Ads - CPL real
+  var cAC=document.getElementById('cAC');
+  if(cAC) new Chart(cAC,{{type:'bar',data:{{
+    labels:{ads_names_j},
+    datasets:[{{label:'CPL real',data:{ads_cpl_real_j},
+      backgroundColor:['rgba(65,183,79,.35)','rgba(65,183,79,.35)','rgba(247,147,30,.3)','rgba(229,57,53,.3)','rgba(229,57,53,.3)','rgba(229,57,53,.5)'],
+      borderColor:['#41B74F','#41B74F','#F7931E','#E53935','#E53935','#E53935'],
+      borderWidth:1.5,borderRadius:4}}]
+  }},options:{{...BASE,indexAxis:'y',plugins:{{legend:{{display:false}}}},
+    scales:{{
+      x:{{ticks:{{color:mu,font:{{size:10}},callback:function(v){{return '$'+v.toLocaleString()}}}},grid:{{color:gc}}}},
+      y:{{ticks:{{color:mu,font:{{size:10}}}},grid:{{color:gc}}}}
+    }}}}}});
+
+}});
+</script>
+</body>
+</html>"""
+
+# ─── MAIN ─────────────────────────────────────────────────────────────────────
+def main():
+    from datetime import datetime
+    print("\n" + "="*50)
+    print("  COPERNICO - Generar Dashboard v2")
+    print("  " + datetime.now().strftime("%d %b %Y - %H:%M"))
+    print("="*50 + "\n")
+
+    print("Leyendo Google Sheets...")
+    df_ghl   = leer_tab("Registros GHL")
+    df_ads   = leer_tab("Historial_Ads")
+    df_eod   = leer_tab("Registros Diarios")
+    df_log   = leer_tab("Log_Semanal")
+    df_metas = leer_tab("Metas")
+    df_info  = leer_tab("Info General 2026")
+
+    print("\nCalculando metricas...")
+    metas   = leer_metas(df_metas)
+    monthly = leer_info_general(df_info)
+    ghl     = procesar_ghl_semana(df_ghl)
+    eod     = procesar_eod(df_eod, metas)
+    u3_tmp  = monthly[-3:] if len(monthly) >= 3 else monthly
+    u3_vis_tmp = sum(m["vis"] for m in u3_tmp)
+    u3_cie_tmp = sum(m["cie"] for m in u3_tmp)
+    gbl_cvc_tmp = round(u3_cie_tmp/u3_vis_tmp*100,1) if u3_vis_tmp > 0 else 20.0
+    ads     = procesar_ads(df_ads, ghl.get("ad_quality", {}), gbl_cvc_tmp)
+    logs    = procesar_log(df_log)
+
+    u3 = monthly[-3:] if len(monthly) >= 3 else monthly
+    u3_leads = sum(m["leads"] for m in u3)
+    u3_cot   = sum(m["cot"]   for m in u3)
+    esem     = eod.get("sem_cur", {})
+    print(f"  Info General: {len(monthly)} meses leidos")
+    print(f"  Leads 3 meses: {u3_leads:,}")
+    print(f"  Cotizaciones 3m: {u3_cot}")
+    print(f"  Metas: llamadas={metas['llamadas']}, cotiz={metas['cotizaciones']}")
+    print(f"  EOD esta semana: {esem.get('llamadas',0)} llamadas, {esem.get('cots',0)} cotiz")
+    print(f"  Agentes EOD: {len(eod.get('agentes',{}))}")
+    print(f"  Ads: {len(ads)}")
+    print(f"  Log: {len(logs)} entradas")
+
+    print("\nGenerando HTML...")
+    html = generar_html(monthly, ghl, eod, ads, logs, metas)
+    from pathlib import Path
+    Path("index.html").write_text(html, encoding="utf-8")
+    print(f"  Listo: index.html ({len(html)//1000}KB)")
+
+    print("\n" + "="*50)
+    print("  git add index.html")
+    print('  git commit -m "update"')
+    print("  git push origin main")
+    print("="*50 + "\n")
+
+if __name__ == "__main__":
+    main()
